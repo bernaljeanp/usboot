@@ -1,6 +1,6 @@
 [package]
 name = "usboot"
-version = "0.1.0"
+version = "0.2.0"
 description = "USBoot - a tiny, honest USB image writer"
 authors = ["USBoot contributors"]
 license = "Apache-2.0"
