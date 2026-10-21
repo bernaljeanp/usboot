@@ -46,6 +46,18 @@
         ],
         "displayLanguageSelector": false
       }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDg1QjAyOEYzMzI0RDZERTUKUldUbGJVMHk4eWl3aFdGL2xjS0gyY1g4bEJDYTlWK092eDJaZkJiT1ZGM05INFJWbnp1aEhGWjAK",
+      "endpoints": [
+        "https://github.com/bernaljeanp/usboot/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

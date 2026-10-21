@@ -4,7 +4,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { open } from "@tauri-apps/plugin-dialog";
-import { Check, Disc3, Library as LibraryIcon, LoaderCircle, RotateCcw, ShieldAlert, ShieldCheck, TriangleAlert, Usb, Zap } from "lucide-react";
+import { check, type Update } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { ArrowDownToLine, Check, Disc3, Library as LibraryIcon, LoaderCircle, RotateCcw, ShieldAlert, ShieldCheck, TriangleAlert, Usb, Zap } from "lucide-react";
 import Library from "./Library";
 import SectorMap from "./SectorMap";
 import LightBar, { Backdrop, type Rgb } from "./Shader";
@@ -66,6 +68,8 @@ export default function App() {
   // Windows mode extras (written as autounattend.xml), like Rufus's dialog.
   const [win, setWin] = useState({ bypass: false, local: false, user: "", privacy: false });
   const running = run?.kind === "running" || run?.kind === "restoring";
+  const [update, setUpdate] = useState<Update | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   const pick = async (path: string) => {
     try {
@@ -79,6 +83,8 @@ export default function App() {
   useEffect(() => writePref("usboot.light", light), [light]);
   useEffect(() => {
     invoke<boolean>("is_admin").then(setAdmin);
+    // Quietly ask GitHub for a newer signed release; offline or dev builds just stay as they are.
+    check().then(setUpdate).catch(() => {});
     const off = getCurrentWebview().onDragDropEvent((e) => {
       const p = e.payload;
       setDragging(p.type === "enter" || p.type === "over");
@@ -186,6 +192,25 @@ export default function App() {
               />
             ))}
           </div>
+          {update && (
+            <button
+              className="key primary small"
+              disabled={updating || running}
+              onClick={async () => {
+                setUpdating(true);
+                try {
+                  await update.downloadAndInstall();
+                  await relaunch();
+                } catch (e) {
+                  setError(errText(e));
+                  setUpdating(false);
+                }
+              }}
+            >
+              {updating ? <LoaderCircle className="spin" size={14} /> : <ArrowDownToLine size={14} />}
+              {updating ? t.updating : t.updateTo(update.version)}
+            </button>
+          )}
           <span className={`admin ${admin ? "" : "warn"}`}>
             {admin ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
             {admin ? t.admin : t.limited}
