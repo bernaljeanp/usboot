@@ -1,0 +1,215 @@
+// UI language follows Windows: main.tsx asks Rust for the OS display language and calls setLocale
+// before the first render. Add a language by copying `en` and adding it to `dictionaries`.
+
+export let locale = navigator.language || "en";
+export let nf = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+export function fmtSize(bytes: number) {
+  const u = ["B", "KB", "MB", "GB", "TB"];
+  let i = 0;
+  while (bytes >= 1024 && i < u.length - 1) (bytes /= 1024), i++;
+  return `${nf.format(i > 0 && bytes < 10 ? Math.round(bytes * 10) / 10 : Math.round(bytes))} ${u[i]}`;
+}
+
+const en = {
+  hero: "Write an image to a USB drive",
+  lede: "Pick an ISO or IMG, pick a drive. USBoot writes it byte for byte and reads it back to make sure.",
+  admin: "Administrator",
+  limited: "Run as administrator to write drives",
+  stepImage: "Image",
+  stepDrive: "Drive",
+  chooseImage: "Choose an image",
+  chooseHint: ".iso or .img — or drop it on the window",
+  change: "Change",
+  bootable: "Bootable",
+  notBootable: "Not hybrid",
+  windowsIso: "Windows install ISO: USBoot will use Windows mode — a UEFI drive (GPT + FAT32) with install.wim split so it fits. Boots on any Windows 11 PC.",
+  phases: { write: "Writing", verify: "Verifying", prepare: "Preparing drive", copy: "Copying files", split: "Splitting install.wim" } as Record<string, string>,
+  notHybrid: "This image has no boot record. It will be copied exactly, but it may not boot from USB.",
+  noDrives: "Plug in a USB drive.",
+  noDrivesHint: "Only USB drives are shown. Your system disk never is.",
+  tooSmall: "Too small",
+  externalDisk: "External disk",
+  externalWarn: "This is larger than a typical USB stick — it looks like an external disk. Make sure nothing on it matters.",
+  flash: "Flash",
+  eraseWarn: "Everything on the drive will be erased.",
+  confirmTitle: (name: string) => `Erase ${name}?`,
+  confirmBody: (what: string, size: string) => `Everything on ${what} (${size}) will be permanently erased and replaced by the image.`,
+  cancel: "Cancel",
+  eraseAndFlash: "Erase and flash",
+  writing: "Writing",
+  verifying: "Verifying",
+  done: "Done",
+  doneBody: "Written and verified. You can unplug the drive.",
+  cancelled: "Cancelled. The drive is incomplete — flash it again or format it.",
+  close: "Close",
+  // Library subtitles come from the Rust catalog in English; translate them here.
+  descs: {} as Record<string, string>,
+  latest: "latest",
+  diskImage: "Disk image",
+  bayEmpty: "No drive selected",
+  bayHint: "Pick an image and a drive: the map shows where the image will land.",
+  bayFits: (img: string, drv: string, pct: string) => `The image takes ${img} of ${drv} (${pct}%). The outlined cells are where it lands.`,
+  bayDone: "Written and verified, sector by sector.",
+  navFlash: "Flash",
+  navLibrary: "Library",
+  libraryTitle: "ISO library",
+  libraryLede: "The newest official release of each distro, read live from the project's own servers. Downloads are checked against the official SHA-256 before you can use them.",
+  searching: "Finding the newest versions…",
+  download: "Download",
+  use: "Use",
+  newVersion: "New version",
+  unavailable: "Unavailable",
+  findingMirrors: "Finding the fastest mirrors…",
+  checkingSha: "Checking SHA-256…",
+  mirrors: (n: number) => (n === 1 ? "1 mirror" : `${n} mirrors`),
+  officialSite: "Official site",
+  openMicrosoft: "Get it from Microsoft",
+  windowsNote: "Microsoft doesn't allow direct downloads. Download the ISO there and drop it on USBoot.",
+  libraryHint: "Saved to Downloads\\USBoot. A download that doesn't match its official checksum is deleted, never kept.",
+  restore: "Restore drive",
+  restoreTitle: (name: string) => `Restore ${name}?`,
+  restoreBody: (what: string, size: string) => `Erases everything on ${what} and leaves one partition using the full ${size}. Fixes drives that show the wrong size after flashing Linux.`,
+  fileSystem: "File system",
+  label: "Name",
+  fsHint: {
+    exfat: "exFAT works on Windows, Mac, Linux, TVs and consoles. Best for most drives.",
+    ntfs: "NTFS is for Windows only (Mac reads it but cannot write). Good for big backups.",
+    fat32: "FAT32 works on everything, even old devices, but no file can be over 4 GB.",
+  } as Record<string, string>,
+  eraseAndRestore: "Erase and restore",
+  restoring: "Restoring the drive…",
+  restoredBody: (fs: string) => `The drive is clean: one ${fs} partition with its full capacity.`,
+  stop: "Stop",
+  left: (s: string) => `${s} left`,
+  lightColor: "Light color",
+  lights: { lunar: "Lunar", plasma: "Plasma", ember: "Ember", arctic: "Arctic" } as Record<string, string>,
+  errors: {
+    emptyImage: () => "The image is empty.",
+    driveChanged: () => "The drive changed or was unplugged. Pick it again.",
+    tooLarge: () => "The image is larger than the drive.",
+    imageChanged: () => "The image file changed while writing.",
+    needsAdmin: () => "USBoot needs administrator rights to write to drives.",
+    verifyFailed: (at: string) => `Verification failed at byte ${at}: the drive may be faulty or fake.`,
+    diskpart: (d: string) => `Windows could not prepare the drive: ${d}`,
+    checksum: () => "The download doesn't match the official checksum, so it was deleted. Try again.",
+    notUploaded: (f: string) => `${f} is not on the server yet.`,
+    mirrorsFailed: () => "Every mirror failed mid-download. Check your connection and try again.",
+  } as Record<string, (detail: string) => string>,
+};
+
+type Dict = typeof en;
+
+const es: Dict = {
+  hero: "Graba una imagen en un USB",
+  lede: "Elige un ISO o IMG y elige un pendrive. USBoot lo copia byte a byte y lo vuelve a leer para asegurarse.",
+  admin: "Administrador",
+  limited: "Ejecuta como administrador para grabar",
+  stepImage: "Imagen",
+  stepDrive: "Unidad",
+  chooseImage: "Elegir una imagen",
+  chooseHint: ".iso o .img — o arrástrala a la ventana",
+  change: "Cambiar",
+  bootable: "Arrancable",
+  notBootable: "No híbrida",
+  windowsIso: "ISO de instalación de Windows: USBoot usará el modo Windows — una unidad UEFI (GPT + FAT32) con install.wim dividido para que quepa. Arranca en cualquier PC con Windows 11.",
+  phases: { write: "Grabando", verify: "Verificando", prepare: "Preparando la unidad", copy: "Copiando archivos", split: "Dividiendo install.wim" },
+  notHybrid: "Esta imagen no tiene registro de arranque. Se copiará exacta, pero quizá no arranque desde USB.",
+  noDrives: "Conecta un pendrive.",
+  noDrivesHint: "Solo se muestran unidades USB. Tu disco del sistema, nunca.",
+  tooSmall: "Muy pequeño",
+  externalDisk: "Disco externo",
+  externalWarn: "Es más grande que un pendrive normal: parece un disco externo. Asegúrate de que no tenga nada importante.",
+  flash: "Grabar",
+  eraseWarn: "Se borrará todo lo que tenga la unidad.",
+  confirmTitle: (name) => `¿Borrar ${name}?`,
+  confirmBody: (what, size) => `Todo lo que hay en ${what} (${size}) se borrará para siempre y se reemplazará por la imagen.`,
+  cancel: "Cancelar",
+  eraseAndFlash: "Borrar y grabar",
+  writing: "Grabando",
+  verifying: "Verificando",
+  done: "Listo",
+  doneBody: "Grabado y verificado. Ya puedes desconectar el pendrive.",
+  cancelled: "Cancelado. La unidad quedó incompleta: vuelve a grabarla o formatéala.",
+  close: "Cerrar",
+  descs: {
+    "Desktop LTS": "Escritorio LTS",
+    Desktop: "Escritorio",
+    Security: "Seguridad",
+    "Gaming · Steam": "Juegos · Steam",
+    Hypervisor: "Hipervisor",
+    Installer: "Instalador",
+    "Live GNOME": "GNOME en vivo",
+    Monthly: "Mensual",
+    "Privacy · USB image": "Privacidad · imagen USB",
+  },
+  latest: "última",
+  diskImage: "Imagen de disco",
+  bayEmpty: "Ninguna unidad elegida",
+  bayHint: "Elige una imagen y una unidad: el mapa muestra dónde quedará la imagen.",
+  bayFits: (img, drv, pct) => `La imagen ocupa ${img} de ${drv} (${pct}%). Las celdas marcadas son donde quedará.`,
+  bayDone: "Grabado y verificado, sector por sector.",
+  navFlash: "Grabar",
+  navLibrary: "Biblioteca",
+  libraryTitle: "Biblioteca de ISOs",
+  libraryLede: "La última versión oficial de cada distribución, leída en vivo desde los servidores de cada proyecto. Cada descarga se compara con el SHA-256 oficial antes de poder usarla.",
+  searching: "Buscando las últimas versiones…",
+  download: "Descargar",
+  use: "Usar",
+  newVersion: "Versión nueva",
+  unavailable: "No disponible",
+  findingMirrors: "Buscando los espejos más rápidos…",
+  checkingSha: "Verificando SHA-256…",
+  mirrors: (n) => (n === 1 ? "1 espejo" : `${n} espejos`),
+  officialSite: "Sitio oficial",
+  openMicrosoft: "Bajar de Microsoft",
+  windowsNote: "Microsoft no permite descargas directas. Baja el ISO ahí y arrástralo a USBoot.",
+  libraryHint: "Se guardan en Descargas\\USBoot. Una descarga que no coincide con su checksum oficial se borra, nunca se conserva.",
+  restore: "Restaurar unidad",
+  restoreTitle: (name) => `¿Restaurar ${name}?`,
+  restoreBody: (what, size) => `Borra todo en ${what} y deja una sola partición con los ${size} completos. Arregla las unidades que muestran un tamaño incorrecto después de grabar Linux.`,
+  fileSystem: "Sistema de archivos",
+  label: "Nombre",
+  fsHint: {
+    exfat: "exFAT funciona en Windows, Mac, Linux, televisores y consolas. Lo mejor para casi todo.",
+    ntfs: "NTFS es solo para Windows (Mac lo lee pero no escribe). Bueno para respaldos grandes.",
+    fat32: "FAT32 funciona en todo, incluso equipos viejos, pero ningún archivo puede pasar de 4 GB.",
+  },
+  eraseAndRestore: "Borrar y restaurar",
+  restoring: "Restaurando la unidad…",
+  restoredBody: (fs) => `La unidad quedó limpia: una partición ${fs} con toda su capacidad.`,
+  stop: "Detener",
+  left: (s) => `quedan ${s}`,
+  lightColor: "Color de luz",
+  lights: { lunar: "Lunar", plasma: "Plasma", ember: "Brasa", arctic: "Ártico" },
+  errors: {
+    emptyImage: () => "La imagen está vacía.",
+    driveChanged: () => "La unidad cambió o se desconectó. Vuelve a elegirla.",
+    tooLarge: () => "La imagen es más grande que la unidad.",
+    imageChanged: () => "El archivo de imagen cambió mientras se grababa.",
+    needsAdmin: () => "USBoot necesita permisos de administrador para grabar unidades.",
+    verifyFailed: (at) => `La verificación falló en el byte ${at}: la unidad puede estar dañada o ser falsa.`,
+    diskpart: (d) => `Windows no pudo preparar la unidad: ${d}`,
+    checksum: () => "La descarga no coincide con el checksum oficial, así que se borró. Inténtalo de nuevo.",
+    notUploaded: (f) => `${f} todavía no está en el servidor.`,
+    mirrorsFailed: () => "Todos los espejos fallaron a mitad de la descarga. Revisa tu conexión e inténtalo de nuevo.",
+  },
+};
+
+const dictionaries: Record<string, Dict> = { en, es };
+
+export let t: Dict = en;
+
+export function setLocale(tag: string) {
+  locale = tag;
+  nf = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+  t = dictionaries[tag.split(/[-_]/)[0].toLowerCase()] ?? en;
+  document.documentElement.lang = tag;
+}
+setLocale(locale);
+
+/** Rust errors are "code" or "code|detail"; anything else (OS/network text) passes through. */
+export function errText(e: unknown) {
+  const s = String(e);
+  const [code, ...rest] = s.split("|");
+  return t.errors[code]?.(rest.join("|")) ?? s;
+}
