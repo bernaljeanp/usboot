@@ -1,6 +1,8 @@
 // UI language follows Windows: main.tsx asks Rust for the OS display language and calls setLocale
 // before the first render. Add a language by copying `en` and adding it to `dictionaries`.
 
+import { de, fr, it, pt } from "./locales";
+
 export let locale = navigator.language || "en";
 export let nf = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
 export function fmtSize(bytes: number) {
@@ -107,7 +109,7 @@ const en = {
     diskpart: (d: string) => `Windows could not prepare the drive: ${d}`,
     checksum: () => "The download doesn't match the official checksum, so it was deleted. Try again.",
     notUploaded: (f: string) => `${f} is not on the server yet.`,
-    badUser: () => "That user name isn't valid: up to 20 characters, without \ / [ ] : ; | = , + * ? < > @ \" %.",
+    badUser: () => "That user name isn't valid: up to 20 characters, without \\ / [ ] : ; | = , + * ? < > @ \" %.",
     windowsModeOnly: () => "Windows install ISOs can only be prepared from Windows for now.",
     ntfsOnMac: () => "macOS can't format NTFS. Choose exFAT or FAT32.",
     system: (d: string) => `The system couldn't prepare the drive: ${d}`,
@@ -116,7 +118,7 @@ const en = {
   } as Record<string, (detail: string) => string>,
 };
 
-type Dict = typeof en;
+export type Dict = typeof en;
 
 const es: Dict = {
   hero: "Graba una imagen en un USB",
@@ -224,7 +226,7 @@ const es: Dict = {
     diskpart: (d) => `Windows no pudo preparar la unidad: ${d}`,
     checksum: () => "La descarga no coincide con el checksum oficial, así que se borró. Inténtalo de nuevo.",
     notUploaded: (f) => `${f} todavía no está en el servidor.`,
-    badUser: () => "Ese nombre de usuario no es válido: hasta 20 caracteres, sin \ / [ ] : ; | = , + * ? < > @ \" %.",
+    badUser: () => "Ese nombre de usuario no es válido: hasta 20 caracteres, sin \\ / [ ] : ; | = , + * ? < > @ \" %.",
     windowsModeOnly: () => "Por ahora los ISO de instalación de Windows solo se pueden preparar desde Windows.",
     ntfsOnMac: () => "macOS no puede formatear en NTFS. Elige exFAT o FAT32.",
     system: (d) => `El sistema no pudo preparar la unidad: ${d}`,
@@ -233,7 +235,7 @@ const es: Dict = {
   },
 };
 
-const dictionaries: Record<string, Dict> = { en, es };
+const dictionaries: Record<string, Dict> = { en, es, pt, fr, de, it };
 
 export let t: Dict = en;
 
