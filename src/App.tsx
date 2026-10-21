@@ -16,8 +16,10 @@ import "./App.css";
 
 type Drive = { number: number; name: string; size: number; serial: string; letters: string[] };
 type Image = { path: string; name: string; size: number; bootable: boolean; windows: boolean };
-type Progress = { phase: "write" | "verify" | "prepare" | "copy" | "split"; done: number; total: number };
-type Running = { kind: "running"; p: Progress | null; since: number; base: number; windows: boolean };
+type Phase = "write" | "verify" | "prepare" | "copy" | "split";
+type Progress = { drive: number; phase: Phase; done: number; total: number };
+/** One entry per drive being flashed; several can run at once. */
+type Running = { kind: "running"; per: Record<number, Progress>; since: number; windows: boolean; count: number };
 type Run =
   | { kind: "confirm" }
   | Running
@@ -40,6 +42,20 @@ const driveLabel = (d: Drive) => (d.letters.length ? `${d.name} (${d.letters.map
 const isExternalDisk = (d: Drive) => d.size > 128 * 1024 ** 3;
 const sameDrive = (a: Drive, b: Drive) => a.number === b.number && a.serial === b.serial && a.size === b.size;
 
+// Windows mode has its own steps; a raw image is write then verify.
+const phasesOf = (windows: boolean): Phase[] => (windows ? ["prepare", "copy", "split"] : ["write", "verify"]);
+
+/** All drives folded into one: overall fraction, the slowest drive's step, and bytes processed. */
+function overall(r: Running) {
+  const phases = phasesOf(r.windows);
+  const ps = Object.values(r.per);
+  const step = (p: Progress) => Math.max(0, phases.indexOf(p.phase));
+  const frac = ps.reduce((a, p) => a + (step(p) + (p.total ? p.done / p.total : 0)) / phases.length, 0) / r.count;
+  const at = ps.length < r.count ? 0 : Math.min(...ps.map(step));
+  const bytes = ps.reduce((a, p) => a + step(p) * p.total + p.done, 0);
+  return { phases, frac, at, bytes, ps };
+}
+
 function readPref(key: string, fallback: string) {
   try {
     return localStorage.getItem(key) ?? fallback;
@@ -61,7 +77,9 @@ export default function App() {
   const [admin, setAdmin] = useState(true);
   const [image, setImage] = useState<Image | null>(null);
   const [drives, setDrives] = useState<Drive[] | null>(null);
-  const [drive, setDrive] = useState<Drive | null>(null);
+  // Several drives can be picked to flash the same image onto all of them at once.
+  const [picked, setPicked] = useState<Drive[]>([]);
+  const drive = picked[0] ?? null;
   const [run, setRun] = useState<Run | null>(null);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +109,7 @@ export default function App() {
       if (p.type === "drop" && p.paths[0]) pick(p.paths[0]);
     });
     const offProgress = listen<Progress>("progress", (e) =>
-      setRun((r) => (r?.kind !== "running" ? r : r.p?.phase === e.payload.phase ? { ...r, p: e.payload } : { ...r, p: e.payload, since: Date.now(), base: e.payload.done })),
+      setRun((r) => (r?.kind !== "running" ? r : { ...r, per: { ...r.per, [e.payload.drive]: e.payload } })),
     );
     return () => {
       off.then((f) => f());
@@ -106,7 +124,7 @@ export default function App() {
       invoke<Drive[]>("list_drives")
         .then((list) => {
           setDrives(list);
-          setDrive((d) => (d && list.find((x) => sameDrive(x, d))) || null);
+          setPicked((ps) => ps.map((d) => list.find((x) => sameDrive(x, d))).filter((d): d is Drive => !!d));
         })
         .catch((e) => setError(errText(e)));
     load();
@@ -114,18 +132,38 @@ export default function App() {
     return () => clearInterval(id);
   }, [running]);
 
+  // Windows mode prepares one drive at a time.
+  useEffect(() => {
+    if (image?.windows) setPicked((ps) => ps.slice(0, 1));
+  }, [image]);
+  const toggle = (d: Drive) =>
+    setPicked((ps) => (ps.some((x) => sameDrive(x, d)) ? ps.filter((x) => !sameDrive(x, d)) : image?.windows ? [d] : [...ps, d]));
+
   const chooseFile = async () => {
     const path = await open({ multiple: false, filters: [{ name: t.diskImage, extensions: ["iso", "img", "bin", "raw"] }] });
     if (typeof path === "string") pick(path);
   };
 
   const flash = async () => {
-    if (!image || !drive) return;
-    setRun({ kind: "running", p: null, since: Date.now(), base: 0, windows: image.windows });
+    if (!image || !picked.length) return;
+    const targets = image.windows ? picked.slice(0, 1) : picked;
+    setRun({ kind: "running", per: {}, since: Date.now(), windows: image.windows, count: targets.length });
     try {
-      const options = { bypassRequirements: win.bypass, localAccount: win.local ? win.user : null, skipPrivacy: win.privacy };
-      await invoke(image.windows ? "flash_windows" : "flash", { path: image.path, drive, ...(image.windows && { options }) });
-      setRun({ kind: "done", message: t.doneBody, flashed: true });
+      if (image.windows) {
+        const options = { bypassRequirements: win.bypass, localAccount: win.local ? win.user : null, skipPrivacy: win.privacy };
+        await invoke("flash_windows", { path: image.path, drive: targets[0], options });
+        setRun({ kind: "done", message: t.doneBody, flashed: true });
+        return;
+      }
+      const results = await invoke<(string | null)[]>("flash", { path: image.path, drives: targets });
+      const failed = targets.map((d, i) => [d, results[i]] as const).filter(([, r]) => r);
+      if (!failed.length) setRun({ kind: "done", message: targets.length > 1 ? t.doneMany(targets.length) : t.doneBody, flashed: true });
+      else if (failed.every(([, r]) => r === "cancelled")) setRun({ kind: "error", message: t.cancelled });
+      else
+        setRun({
+          kind: "error",
+          message: failed.map(([d, r]) => `${d.name}: ${r === "cancelled" ? t.cancelled : errText(r)}`).join("\n"),
+        });
     } catch (e) {
       setRun({ kind: "error", message: e === "cancelled" ? t.cancelled : errText(e) });
     }
@@ -142,22 +180,22 @@ export default function App() {
     }
   };
 
-  const writing = run?.kind === "restoring" || (run?.kind === "running" && run.p?.phase !== "verify" && run.p?.phase !== "split");
+  const ov = run?.kind === "running" ? overall(run) : null;
+  const writing = run?.kind === "restoring" || (!!ov && !["verify", "split"].includes(ov.phases[ov.at]));
   const lightRgb = writing ? DANGER : rgb(LIGHTS[light]);
   const fits = (d: Drive) => !image || image.size <= d.size;
-  const ready = image && drive && fits(drive) && admin && !(image.windows && win.local && !win.user.trim());
+  const ready = image && picked.length && picked.every(fits) && admin && !(image.windows && win.local && !win.user.trim());
   // Share of the drive the image will take: the bay map previews it, then fills it in.
   const reserve = image && drive ? Math.min(1, image.size / drive.size) : 0;
-  const p = run?.kind === "running" ? run.p : null;
-  const frac = p ? p.done / p.total : 0;
+  const frac = ov ? ov.frac : 0;
   const flashed = run?.kind === "done" && run.flashed;
-  const verifyPhase = p?.phase === "verify" || p?.phase === "split";
+  const raw = run?.kind === "running" && !run.windows;
   // Idle, the map is the whole drive with the image's share outlined; once writing starts it
-  // zooms to the image itself so every cell lights up.
+  // zooms to the image itself so every cell lights up. A raw flash is half writing, half verifying.
   const zoomed = run?.kind === "running" || flashed;
   const mapReserve = zoomed ? 1 : reserve;
-  const written = !zoomed ? 0 : flashed || verifyPhase ? 1 : frac;
-  const verified = flashed ? 1 : verifyPhase ? frac : 0;
+  const written = !zoomed ? 0 : flashed ? 1 : raw ? Math.min(1, frac * 2) : frac;
+  const verified = flashed ? 1 : raw ? Math.max(0, frac * 2 - 1) : 0;
 
   return (
     <div className="shell" style={{ "--light": writing ? "#ff453a" : LIGHTS[light] } as CSSProperties}>
@@ -324,10 +362,10 @@ export default function App() {
                   {drives.map((d) => (
                     <button
                       key={`${d.number}-${d.serial}`}
-                      className={`drive ${drive && sameDrive(drive, d) ? "lit" : ""}`}
-                      aria-pressed={!!drive && sameDrive(drive, d)}
+                      className={`drive ${picked.some((x) => sameDrive(x, d)) ? "lit" : ""}`}
+                      aria-pressed={picked.some((x) => sameDrive(x, d))}
                       disabled={!fits(d)}
-                      onClick={() => setDrive(d)}
+                      onClick={() => toggle(d)}
                     >
                       <Usb size={26} />
                       <span className="drive-body">
@@ -351,12 +389,12 @@ export default function App() {
             <aside className={`bay ${running ? "on" : ""}`} aria-live="polite">
               <div className="bay-head">
                 <span className="bay-led" />
-                <span className="ellipsis">{drive ? driveLabel(drive) : t.bayEmpty}</span>
-                {drive && <b className="num">{fmtSize(drive.size)}</b>}
+                <span className="ellipsis">{picked.length > 1 ? t.drivesMany(picked.length) : drive ? driveLabel(drive) : t.bayEmpty}</span>
+                {picked.length === 1 && <b className="num">{fmtSize(drive!.size)}</b>}
               </div>
               <SectorMap color={rgb(LIGHTS[light])} written={written} verified={verified} reserve={mapReserve} />
               {run?.kind === "running" ? (
-                <RunningPanel run={run} />
+                <RunningPanel run={run} drives={picked} />
               ) : (
                 <>
                   <p className="bay-caption">
@@ -371,7 +409,7 @@ export default function App() {
                       <Zap size={18} />
                       {t.flash}
                     </button>
-                    <button className="key danger-ghost" disabled={!drive || !admin} onClick={() => setRun({ kind: "restore", fs: "exfat", label: "USB" })}>
+                    <button className="key danger-ghost" disabled={picked.length !== 1 || !admin} onClick={() => setRun({ kind: "restore", fs: "exfat", label: "USB" })}>
                       <RotateCcw size={16} />
                       {t.restore}
                     </button>
@@ -391,10 +429,12 @@ export default function App() {
               <>
                 <h2 id="sheet-title">
                   <TriangleAlert size={22} color="var(--danger)" />
-                  {t.confirmTitle(drive.name)}
+                  {picked.length > 1 ? t.confirmTitleMany(picked.length) : t.confirmTitle(drive.name)}
                 </h2>
-                <p className="note warn">{t.confirmBody(driveLabel(drive), fmtSize(drive.size))}</p>
-                {isExternalDisk(drive) && <p className="errors">{t.externalWarn}</p>}
+                <p className="note warn">
+                  {t.confirmBody(picked.map(driveLabel).join(", "), fmtSize(picked.reduce((a, d) => a + d.size, 0)))}
+                </p>
+                {picked.some(isExternalDisk) && <p className="errors">{t.externalWarn}</p>}
                 <div className="footer-actions">
                   <button className="key" autoFocus onClick={() => setRun(null)}>
                     {t.cancel}
@@ -477,14 +517,12 @@ export default function App() {
   );
 }
 
-function RunningPanel({ run }: { run: Running }) {
-  const p = run.p;
-  const pct = p ? (p.done / p.total) * 100 : 0;
+function RunningPanel({ run, drives }: { run: Running; drives: Drive[] }) {
+  const { phases, frac, at, bytes, ps } = overall(run);
+  const pct = frac * 100;
   const secs = (Date.now() - run.since) / 1000;
-  const speed = p && secs > 1 ? (p.done - run.base) / secs : 0;
-  // Windows mode has its own steps; a raw image is write then verify.
-  const phases: Progress["phase"][] = run.windows ? ["prepare", "copy", "split"] : ["write", "verify"];
-  const at = Math.max(0, phases.indexOf(p?.phase ?? phases[0]));
+  const speed = secs > 1 ? bytes / secs : 0;
+  const left = frac > 0.005 ? (secs * (1 - frac)) / frac : 0;
   return (
     <div className="bay-run">
       <ol className="steps">
@@ -497,11 +535,28 @@ function RunningPanel({ run }: { run: Running }) {
       </ol>
       <div className="stats">
         <b>{nf.format(Math.floor(pct))}%</b>
-        <span>{speed > 0 && p ? `${fmtSize(speed)}/s · ${t.left(fmtTime((p.total - p.done) / speed))}` : t.phases[phases[at]]}</span>
+        <span>{speed > 0 && left > 0 ? `${fmtSize(speed)}/s · ${t.left(fmtTime(left))}` : t.phases[phases[at]]}</span>
       </div>
       <span className="meter big" role="progressbar" aria-label={t.phases[phases[at]]} aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
         <i style={{ width: `${pct}%` }} />
       </span>
+      {run.count > 1 && (
+        <ul className="per-drive">
+          {drives.slice(0, run.count).map((d) => {
+            const p = ps.find((x) => x.drive === d.number);
+            const f = p ? (Math.max(0, phases.indexOf(p.phase)) + (p.total ? p.done / p.total : 0)) / phases.length : 0;
+            return (
+              <li key={d.number}>
+                <span className="ellipsis">{d.name}</span>
+                <span className="meter">
+                  <i style={{ width: `${f * 100}%` }} />
+                </span>
+                <b className="num">{nf.format(Math.floor(f * 100))}%</b>
+              </li>
+            );
+          })}
+        </ul>
+      )}
       <button className="key danger-ghost" onClick={() => invoke("cancel_flash")}>
         {t.stop}
       </button>

@@ -26,3 +26,4 @@ latest.json
 brand/r-*/
 src-tauri/icons/android/
 src-tauri/icons/ios/
+.claude/

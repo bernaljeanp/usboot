@@ -19,11 +19,25 @@ fn inspect_image(path: String) -> Result<image::ImageInfo, String> {
     image::inspect(&path)
 }
 
+/// Progress of one drive; several drives can be flashing at once.
+fn emit_progress(app: &AppHandle, drive: u32, p: flash::Progress) {
+    let _ = app.emit("progress", serde_json::json!({ "drive": drive, "phase": p.phase, "done": p.done, "total": p.total }));
+}
+
+/// The same image onto every drive in parallel. One result per drive (None = written and verified),
+/// so one bad stick doesn't hide that the others are fine.
 #[tauri::command(async)]
-fn flash(app: AppHandle, path: String, drive: drives::Drive) -> Result<(), String> {
+fn flash(app: AppHandle, path: String, drives: Vec<drives::Drive>) -> Vec<Option<String>> {
     CANCEL.store(false, Ordering::SeqCst);
-    flash::run(&path, &drive, &CANCEL, |p| {
-        let _ = app.emit("progress", p);
+    std::thread::scope(|s| {
+        let jobs: Vec<_> = drives
+            .iter()
+            .map(|d| {
+                let (app, path) = (&app, &path);
+                s.spawn(move || flash::run(path, d, &CANCEL, |p| emit_progress(app, d.number, p)))
+            })
+            .collect();
+        jobs.into_iter().map(|j| j.join().unwrap_or_else(|_| Err("crashed".into())).err()).collect()
     })
 }
 
@@ -31,9 +45,7 @@ fn flash(app: AppHandle, path: String, drive: drives::Drive) -> Result<(), Strin
 #[tauri::command(async)]
 fn flash_windows(app: AppHandle, path: String, drive: drives::Drive, options: windows::Options) -> Result<(), String> {
     CANCEL.store(false, Ordering::SeqCst);
-    windows::run(&path, &drive, &options, &CANCEL, |p| {
-        let _ = app.emit("progress", p);
-    })
+    windows::run(&path, &drive, &options, &CANCEL, |p| emit_progress(&app, drive.number, p))
 }
 
 #[tauri::command(async)]

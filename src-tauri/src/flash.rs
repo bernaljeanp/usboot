@@ -69,7 +69,11 @@ fn wipe(number: u32) -> Result<(), String> {
     diskpart(&format!("select disk {number}\nclean\n"))
 }
 
+/// One diskpart at a time: parallel flashes share the script file and Windows' disk service.
+static DISKPART: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 pub fn diskpart(commands: &str) -> Result<(), String> {
+    let _one_at_a_time = DISKPART.lock().unwrap_or_else(|e| e.into_inner());
     let script = std::env::temp_dir().join("usboot-diskpart.txt");
     std::fs::write(&script, commands).map_err(|e| e.to_string())?;
     let out = Command::new("diskpart").arg("/s").arg(&script).creation_flags(0x0800_0000).output();

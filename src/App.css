@@ -435,3 +435,9 @@ h1 { margin: 0; font-weight: 800; font-stretch: 125%; font-size: 32px; line-heig
 .win-opts label span { display: flex; flex-direction: column; font-weight: 600; }
 .win-opts small { color: var(--dim); font-weight: 400; font-size: 12.5px; }
 .win-opts .field { margin-left: 28px; }
+
+/* --- several drives at once ------------------------------------------------------ */
+.per-drive { display: flex; flex-direction: column; gap: 7px; margin: 0; padding: 0; list-style: none; font-size: 12.5px; }
+.per-drive li { display: grid; grid-template-columns: minmax(0, 1fr) 90px 38px; gap: 10px; align-items: center; }
+.per-drive .meter { height: 6px; }
+.errors { white-space: pre-line; }

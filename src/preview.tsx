@@ -30,11 +30,11 @@ const library = [
   local: id === "mint" ? "C:/Users/you/Downloads/USBoot/linuxmint-22.3-cinnamon-64bit.iso" : null,
 }));
 
-async function simulate(event: string, phases: string[], total: number, extra: (id?: string) => object = () => ({})) {
+async function simulate(event: string, phases: string[], total: number, extra: (id?: string) => object = () => ({}), tick = 60) {
   for (const phase of phases) {
     for (let i = 0; i <= 100; i += 1) {
       await emit(event, { phase, done: (total * i) / 100, total, sources: 3, ...extra() });
-      await new Promise((r) => setTimeout(r, 60));
+      await new Promise((r) => setTimeout(r, tick));
     }
   }
 }
@@ -48,8 +48,11 @@ mockIPC(
       case "list_drives": return drives;
       case "inspect_image": return { path: args.path, name: args.path.split(/[\\/]/).pop(), size: 2.88 * GB, bootable: true, windows: args.path.includes("Win") };
       case "library": return library;
-      case "flash": await simulate("progress", ["write", "verify"], 2.88 * GB); return null;
-      case "flash_windows": await simulate("progress", ["prepare", "copy", "split"], 5.4 * GB); return null;
+      case "flash":
+        // each drive at its own pace, like real sticks
+        await Promise.all(args.drives.map((d: any, i: number) => simulate("progress", ["write", "verify"], 2.88 * GB, () => ({ drive: d.number }), 60 + i * 25)));
+        return args.drives.map(() => null);
+      case "flash_windows": await simulate("progress", ["prepare", "copy", "split"], 5.4 * GB, () => ({ drive: args.drive.number })); return null;
       case "download_iso": await simulate("download", ["connect", "download", "verify"], 1.53 * GB, () => ({ id: args.id })); return null;
       case "restore_drive": await new Promise((r) => setTimeout(r, 1500)); return null;
       default: return null;
