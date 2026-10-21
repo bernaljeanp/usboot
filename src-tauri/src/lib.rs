@@ -29,9 +29,9 @@ fn flash(app: AppHandle, path: String, drive: drives::Drive) -> Result<(), Strin
 
 /// Windows install ISOs: GPT + FAT32 + copied files instead of a raw copy.
 #[tauri::command(async)]
-fn flash_windows(app: AppHandle, path: String, drive: drives::Drive) -> Result<(), String> {
+fn flash_windows(app: AppHandle, path: String, drive: drives::Drive, options: windows::Options) -> Result<(), String> {
     CANCEL.store(false, Ordering::SeqCst);
-    windows::run(&path, &drive, &CANCEL, |p| {
+    windows::run(&path, &drive, &options, &CANCEL, |p| {
         let _ = app.emit("progress", p);
     })
 }

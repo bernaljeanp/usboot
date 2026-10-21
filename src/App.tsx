@@ -63,6 +63,8 @@ export default function App() {
   const [run, setRun] = useState<Run | null>(null);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Windows mode extras (written as autounattend.xml), like Rufus's dialog.
+  const [win, setWin] = useState({ bypass: false, local: false, user: "", privacy: false });
   const running = run?.kind === "running" || run?.kind === "restoring";
 
   const pick = async (path: string) => {
@@ -115,7 +117,8 @@ export default function App() {
     if (!image || !drive) return;
     setRun({ kind: "running", p: null, since: Date.now(), base: 0, windows: image.windows });
     try {
-      await invoke(image.windows ? "flash_windows" : "flash", { path: image.path, drive });
+      const options = { bypassRequirements: win.bypass, localAccount: win.local ? win.user : null, skipPrivacy: win.privacy };
+      await invoke(image.windows ? "flash_windows" : "flash", { path: image.path, drive, ...(image.windows && { options }) });
       setRun({ kind: "done", message: t.doneBody, flashed: true });
     } catch (e) {
       setRun({ kind: "error", message: e === "cancelled" ? t.cancelled : errText(e) });
@@ -136,7 +139,7 @@ export default function App() {
   const writing = run?.kind === "restoring" || (run?.kind === "running" && run.p?.phase !== "verify" && run.p?.phase !== "split");
   const lightRgb = writing ? DANGER : rgb(LIGHTS[light]);
   const fits = (d: Drive) => !image || image.size <= d.size;
-  const ready = image && drive && fits(drive) && admin;
+  const ready = image && drive && fits(drive) && admin && !(image.windows && win.local && !win.user.trim());
   // Share of the drive the image will take: the bay map previews it, then fills it in.
   const reserve = image && drive ? Math.min(1, image.size / drive.size) : 0;
   const p = run?.kind === "running" ? run.p : null;
@@ -229,6 +232,42 @@ export default function App() {
                     <div className="notes">
                       <p className={`note ${image.windows ? "" : "warn"}`}>{image.windows ? t.windowsIso : t.notHybrid}</p>
                     </div>
+                  )}
+                  {image.windows && (
+                    <fieldset className="win-opts">
+                      <legend>{t.winOptions}</legend>
+                      <label>
+                        <input type="checkbox" className="check" checked={win.bypass} onChange={(e) => setWin({ ...win, bypass: e.target.checked })} />
+                        <span>
+                          {t.winBypass}
+                          <small>{t.winBypassHint}</small>
+                        </span>
+                      </label>
+                      <label>
+                        <input type="checkbox" className="check" checked={win.local} onChange={(e) => setWin({ ...win, local: e.target.checked })} />
+                        <span>
+                          {t.winLocal}
+                          <small>{t.winLocalHint}</small>
+                        </span>
+                      </label>
+                      {win.local && (
+                        <input
+                          className="field"
+                          aria-label={t.winUserName}
+                          placeholder={t.winUserName}
+                          maxLength={20}
+                          value={win.user}
+                          onChange={(e) => setWin({ ...win, user: e.target.value })}
+                        />
+                      )}
+                      <label>
+                        <input type="checkbox" className="check" checked={win.privacy} onChange={(e) => setWin({ ...win, privacy: e.target.checked })} />
+                        <span>
+                          {t.winPrivacy}
+                          <small>{t.winPrivacyHint}</small>
+                        </span>
+                      </label>
+                    </fieldset>
                   )}
                 </>
               ) : (

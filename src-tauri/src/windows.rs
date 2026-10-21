@@ -16,7 +16,89 @@ const FAT32_MAX: u64 = (4 << 30) - 1;
 const PARTITION_MB: u64 = 32 * 1024;
 const SPLIT_MB: u32 = 3800;
 
-pub fn run(iso: &str, picked: &Drive, cancel: &AtomicBool, mut emit: impl FnMut(Progress)) -> Result<(), String> {
+/// The Rufus-style tweaks, written as autounattend.xml at the root of the drive (Setup reads it on its own).
+#[derive(serde::Deserialize, Default, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Options {
+    /// Skip the TPM 2.0 / Secure Boot / CPU / RAM / storage checks.
+    pub bypass_requirements: bool,
+    /// Create this local user instead of asking for a Microsoft account.
+    pub local_account: Option<String>,
+    /// Answer the privacy and EULA screens.
+    pub skip_privacy: bool,
+}
+
+fn xml_escape(s: &str) -> String {
+    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;").replace('\'', "&apos;")
+}
+
+/// Windows refuses these in user names, and they'd also break the `net user` command line.
+pub fn valid_user(name: &str) -> bool {
+    let n = name.trim();
+    !n.is_empty() && n.len() <= 20 && !n.chars().any(|c| "\\/[]:;|=,+*?<>@\"%".contains(c)) && !n.ends_with('.')
+}
+
+pub fn unattend(o: &Options) -> Option<String> {
+    let user = o.local_account.as_deref().map(str::trim).filter(|n| !n.is_empty());
+    if !o.bypass_requirements && user.is_none() && !o.skip_privacy {
+        return None;
+    }
+    const COMP: &str = r#"processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS""#;
+    let cmd = |order: usize, path: &str| {
+        format!("<RunSynchronousCommand wcm:action=\"add\"><Order>{order}</Order><Path>{}</Path></RunSynchronousCommand>", xml_escape(path))
+    };
+    let mut xml = String::from(
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<unattend xmlns=\"urn:schemas-microsoft-com:unattend\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\">\n",
+    );
+    if o.bypass_requirements {
+        let checks = ["BypassTPMCheck", "BypassSecureBootCheck", "BypassCPUCheck", "BypassRAMCheck", "BypassStorageCheck"];
+        let cmds: String = checks
+            .iter()
+            .enumerate()
+            .map(|(i, c)| cmd(i + 1, &format!(r"reg add HKLM\SYSTEM\Setup\LabConfig /v {c} /t REG_DWORD /d 1 /f")))
+            .collect();
+        xml += &format!(
+            "<settings pass=\"windowsPE\"><component name=\"Microsoft-Windows-Setup\" {COMP}><RunSynchronous>{cmds}</RunSynchronous></component></settings>\n"
+        );
+    }
+    if user.is_some() {
+        // Without this, Windows 11 Home/Pro insists on a network and a Microsoft account.
+        let nro = cmd(1, r"reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE /v BypassNRO /t REG_DWORD /d 1 /f");
+        xml += &format!(
+            "<settings pass=\"specialize\"><component name=\"Microsoft-Windows-Deployment\" {COMP}><RunSynchronous>{nro}</RunSynchronous></component></settings>\n"
+        );
+    }
+    if user.is_some() || o.skip_privacy {
+        let mut shell = String::new();
+        shell += "<OOBE>";
+        if o.skip_privacy {
+            shell += "<ProtectYourPC>3</ProtectYourPC><HideEULAPage>true</HideEULAPage>";
+        }
+        if user.is_some() {
+            shell += "<HideOnlineAccountScreens>true</HideOnlineAccountScreens>";
+        }
+        shell += "</OOBE>";
+        if let Some(name) = user {
+            let n = xml_escape(name);
+            // Blank password that must be changed at first sign-in, like Rufus.
+            shell += &format!(
+                "<UserAccounts><LocalAccounts><LocalAccount wcm:action=\"add\"><Name>{n}</Name><Group>Administrators</Group><Password><Value></Value><PlainText>true</PlainText></Password></LocalAccount></LocalAccounts></UserAccounts>\
+                 <FirstLogonCommands><SynchronousCommand wcm:action=\"add\"><Order>1</Order><CommandLine>{}</CommandLine></SynchronousCommand></FirstLogonCommands>",
+                xml_escape(&format!("net user \"{name}\" /logonpasswordchg:yes"))
+            );
+        }
+        xml += &format!("<settings pass=\"oobeSystem\"><component name=\"Microsoft-Windows-Shell-Setup\" {COMP}>{shell}</component></settings>\n");
+    }
+    xml += "</unattend>\n";
+    Some(xml)
+}
+
+pub fn run(iso: &str, picked: &Drive, opts: &Options, cancel: &AtomicBool, mut emit: impl FnMut(Progress)) -> Result<(), String> {
+    if let Some(name) = opts.local_account.as_deref().filter(|n| !n.trim().is_empty()) {
+        if !valid_user(name) {
+            return Err("badUser".into());
+        }
+    }
     if !drives::list()?.contains(picked) {
         return Err("driveChanged".into());
     }
@@ -43,7 +125,10 @@ pub fn run(iso: &str, picked: &Drive, cancel: &AtomicBool, mut emit: impl FnMut(
     let src = src.chars().next().filter(char::is_ascii_alphabetic).ok_or("Could not open the ISO")?;
     let src = PathBuf::from(format!("{src}:\\"));
 
-    let result = copy_and_split(&src, &usb, cancel, &mut emit);
+    let result = copy_and_split(&src, &usb, cancel, &mut emit).and_then(|_| match unattend(opts) {
+        Some(xml) => fs::write(usb.join("autounattend.xml"), xml).map_err(|e| e.to_string()),
+        None => Ok(()),
+    });
     let _ = drives::powershell(&format!("Dismount-DiskImage -ImagePath '{esc}' | Out-Null"));
     result
 }
@@ -144,6 +229,23 @@ fn copy_and_split(src: &Path, usb: &Path, cancel: &AtomicBool, emit: &mut impl F
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unattend_only_has_what_was_asked() {
+        assert_eq!(unattend(&Options::default()), None);
+
+        let bypass = unattend(&Options { bypass_requirements: true, ..Default::default() }).unwrap();
+        assert!(bypass.contains("BypassTPMCheck") && bypass.contains("pass=\"windowsPE\""));
+        assert!(!bypass.contains("oobeSystem"));
+
+        let user = unattend(&Options { local_account: Some("Ana <&> \"x\"".into()), skip_privacy: true, ..Default::default() }).unwrap();
+        assert!(user.contains("BypassNRO") && user.contains("<ProtectYourPC>3</ProtectYourPC>"));
+        assert!(user.contains("<Name>Ana &lt;&amp;&gt; &quot;x&quot;</Name>"), "names are XML-escaped");
+        assert!(!user.contains("windowsPE"));
+
+        assert!(valid_user("Jean") && valid_user("ana.perez"));
+        assert!(!valid_user("") && !valid_user("a/b") && !valid_user("dot.") && !valid_user("abcdefghijklmnopqrstu"));
+    }
 
     /// The copy path on plain folders: small files copied, a >4 GB file would be held for DISM.
     #[test]
