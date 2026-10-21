@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>USBoot — Crea pendrives booteables, verificados byte a byte</title>
+  <meta name="description" content="Programa gratis y de código abierto para crear pendrives booteables en Windows, Linux y macOS. Pesa 3 MB, trae una biblioteca de 20 distribuciones, descarga desde varios espejos a la vez e instala Windows 11 sin TPM. Alternativa a Rufus y Etcher.">
+  <link rel="canonical" href="https://bernaljeanp.github.io/usboot/es/">
+  <link rel="alternate" hreflang="en" href="https://bernaljeanp.github.io/usboot/">
+  <link rel="alternate" hreflang="es" href="https://bernaljeanp.github.io/usboot/es/">
+  <link rel="alternate" hreflang="x-default" href="https://bernaljeanp.github.io/usboot/">
+  <link rel="icon" href="../favicon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:title" content="USBoot — pendrives booteables con una app de 3 MB">
+  <meta property="og:description" content="Biblioteca de ISOs siempre al día, descargas desde varios espejos, Windows 11 sin TPM y varios pendrives a la vez. Cada byte verificado.">
+  <meta property="og:image" content="https://bernaljeanp.github.io/usboot/og.jpg">
+  <meta property="og:url" content="https://bernaljeanp.github.io/usboot/es/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../site.css">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"SoftwareApplication","name":"USBoot","applicationCategory":"UtilitiesApplication","inLanguage":"es",
+   "operatingSystem":"Windows 10, Windows 11, Linux, macOS","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+   "downloadUrl":"https://github.com/bernaljeanp/usboot/releases/latest","license":"https://www.apache.org/licenses/LICENSE-2.0",
+   "description":"Crea pendrives booteables con una app de 3 MB, con biblioteca de ISOs y verificación byte a byte."}
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="./"><img src="../logo.png" alt="" width="34" height="34">USBoot</a>
+      <nav aria-label="Sitio">
+        <a class="hide-sm" href="#funciones">Funciones</a>
+        <a class="hide-sm" href="#instalar">Instalar</a>
+        <a href="../" hreflang="en" lang="en">English</a>
+        <a href="https://github.com/bernaljeanp/usboot">GitHub</a>
+      </nav>
+    </header>
+    <div class="led" aria-hidden="true"></div>
+
+    <main>
+      <div class="hero">
+        <div>
+          <h1>Pendrives booteables,<br><em>verificados byte a byte.</em></h1>
+          <p>USBoot graba cualquier ISO en un pendrive y después lo vuelve a leer completo para comprobarlo. Su biblioteca siempre baja la última versión de Ubuntu, Fedora, Mint o Arch desde los servidores más rápidos. Pesa 3 MB, es gratis y de código abierto.</p>
+          <div class="cta">
+            <a id="download" class="key" href="https://github.com/bernaljeanp/usboot/releases/latest"
+               data-win="Descargar para Windows" data-mac="Descargar para macOS (beta)" data-linux="Descargar para Linux (beta)">
+              <span>Descargar para Windows</span> <small id="version"></small>
+            </a>
+            <a class="key ghost" href="https://github.com/bernaljeanp/usboot">★ Dar una estrella en GitHub</a>
+          </div>
+          <p class="meta">Windows 10/11 · Linux y macOS (beta) · <a href="https://github.com/bernaljeanp/usboot/releases/latest">todas las descargas</a></p>
+        </div>
+        <div class="shot"><img src="../demo.gif" width="760" height="543" alt="USBoot grabando Linux Mint en un pendrive: un mapa de panal del disco se enciende mientras graba y luego un barrido verifica cada byte"></div>
+      </div>
+
+      <section id="funciones">
+        <h2>Todo lo que hacen Rufus y Etcher. Y más.</h2>
+        <p class="sub">Hecho en Rust, por eso es liviano y rápido. Nada que configurar: eliges una imagen, eliges un pendrive.</p>
+        <div class="grid">
+          <div class="card"><h3><i></i>Verificado, byte a byte</h3><p>Después de grabar, USBoot lee todo el pendrive y lo compara. Un pendrive dañado o falso no puede esconderse.</p></div>
+          <div class="card"><h3><i></i>Biblioteca de ISOs al día</h3><p>20 distribuciones, siempre la última versión oficial, leída directo del archivo de verificación de cada proyecto.</p></div>
+          <div class="card"><h3><i></i>Descargas desde varios espejos</h3><p>Mide los servidores oficiales, descarta los lentos y baja de varios a la vez. En una prueba pasó de 44 KB/s a 16 MB/s.</p></div>
+          <div class="card"><h3><i></i>Windows 11 a tu manera</h3><p>Instálalo en PCs sin TPM 2.0 ni Secure Boot, con un usuario local en vez de cuenta Microsoft y sin preguntas de privacidad.</p></div>
+          <div class="card"><h3><i></i>Varios pendrives a la vez</h3><p>La misma imagen en todos los pendrives en paralelo, cada uno verificado por separado. Ideal para colegios y servicios técnicos.</p></div>
+          <div class="card"><h3><i></i>Restaura cualquier pendrive</h3><p>Con un clic vuelve a ser un pendrive normal con toda su capacidad. Arregla el "mi pendrive de 32 GB muestra 4 MB" después de grabar Linux.</p></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>La biblioteca</h2>
+        <p class="sub">Cada descarga se compara con el SHA-256 oficial del proyecto antes de poder usarla.</p>
+        <div class="distros">
+          <span>Ubuntu</span><span>Ubuntu Server</span><span>Kubuntu</span><span>Xubuntu</span><span>Linux Mint</span><span>Zorin OS</span>
+          <span>Pop!_OS</span><span>Fedora</span><span>CachyOS</span><span>Bazzite</span><span>Debian</span><span>Arch Linux</span>
+          <span>openSUSE</span><span>Rocky Linux</span><span>AlmaLinux</span><span>Kali Linux</span><span>Parrot OS</span><span>Tails</span>
+          <span>Proxmox VE</span><span>Windows 11</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Comparación</h2>
+        <div class="table">
+          <table>
+            <thead><tr><th></th><th>USBoot</th><th>balenaEtcher</th><th>Rufus</th></tr></thead>
+            <tbody>
+              <tr><td>Tamaño de descarga</td><td class="us">3 MB</td><td>~150 MB</td><td>~1,5 MB</td></tr>
+              <tr><td>Verifica después de grabar</td><td class="us">✓</td><td>✓</td><td>—</td></tr>
+              <tr><td>ISOs de instalación de Windows</td><td class="us">✓</td><td>—</td><td>✓</td></tr>
+              <tr><td>Biblioteca de Linux con verificación</td><td class="us">✓</td><td>—</td><td>—</td></tr>
+              <tr><td>Varios pendrives a la vez</td><td class="us">✓</td><td>✓</td><td>—</td></tr>
+              <tr><td>Windows · Linux · macOS</td><td class="us">✓</td><td>✓</td><td>Solo Windows</td></tr>
+              <tr><td>Recolección de datos</td><td class="us">ninguna</td><td>sí</td><td>ninguna</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="instalar">
+        <h2>Instalar</h2>
+        <div class="install">
+          <div><h3>Windows</h3><pre>winget install bernaljeanp.USBoot</pre></div>
+          <div><h3>macOS (chip Apple, beta)</h3><pre>brew install --cask --no-quarantine bernaljeanp/tap/usboot</pre></div>
+          <div><h3>Linux (beta)</h3><pre>.deb o .AppImage desde la última versión en GitHub</pre></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      USBoot es gratis y de código abierto (Apache-2.0) · <a href="https://github.com/bernaljeanp/usboot">Código en GitHub</a> · Hermano de <a href="https://github.com/bernaljeanp/purge">Purge</a>
+    </footer>
+  </div>
+  <script src="../site.js"></script>
+</body>
+</html>

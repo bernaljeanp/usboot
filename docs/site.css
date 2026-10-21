@@ -1,0 +1,99 @@
+/* usboot site — same chassis as the app: anodized graphite, machined grooves, ember light. */
+:root {
+  --chassis: #16181c;
+  --panel: #22262b;
+  --groove: #101215;
+  --edge: #0b0c0e;
+  --ink: #e8eaed;
+  --dim: #9aa2ab;
+  --faint: #8a929b;
+  --light: #ff9a3c;
+  --font: "Archivo", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; color: var(--ink); font: 400 17px/1.6 var(--font);
+  background:
+    radial-gradient(1200px 500px at 50% -120px, color-mix(in srgb, var(--light) 14%, transparent), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 3px),
+    var(--chassis);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+img { display: block; max-width: 100%; height: auto; }
+.wrap { width: min(1080px, 100% - 32px); margin: 0 auto; }
+
+/* top bar */
+.top { display: flex; align-items: center; gap: 18px; padding: 18px 0; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-stretch: 125%; font-size: 20px; text-decoration: none; }
+.brand img { width: 34px; height: 34px; }
+.top nav { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.top nav a { padding: 8px 12px; border-radius: 8px; color: var(--dim); text-decoration: none; font-weight: 600; font-size: 15px; }
+.top nav a:hover { color: var(--ink); background: rgba(255, 255, 255, 0.04); }
+
+/* LED strip, like the app's light bar */
+.led { height: 6px; border-radius: 3px; background:
+  radial-gradient(circle at 3px 3px, color-mix(in srgb, var(--light) 85%, #fff) 0 1.6px, transparent 2px) 0 0 / 8px 6px,
+  var(--groove);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--light) 35%, transparent); opacity: 0.85; }
+
+/* hero */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 34px; padding: 56px 0 40px; text-align: center; }
+.hero h1 { margin: 0; font-weight: 800; font-stretch: 125%; font-size: clamp(36px, 6vw, 64px); line-height: 1.04; letter-spacing: -0.02em; }
+.hero h1 em { font-style: normal; color: var(--light); text-shadow: 0 0 28px color-mix(in srgb, var(--light) 45%, transparent); }
+.hero p { margin: 18px auto 0; max-width: 62ch; color: var(--dim); font-size: 19px; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 26px; }
+.key {
+  display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 22px; border-radius: 11px; border: 0;
+  font: 700 17px var(--font); text-decoration: none; cursor: pointer; color: #1a0e04;
+  background: linear-gradient(180deg, #ffb46a, #ff8a24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 0 var(--edge), 0 10px 28px color-mix(in srgb, var(--light) 35%, transparent);
+  transition: transform 0.08s, filter 0.15s;
+}
+.key:hover { filter: brightness(1.06); }
+.key:active { transform: translateY(1px); }
+.key.ghost { color: var(--ink); background: linear-gradient(180deg, #343a41, #2a2f35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 0 var(--edge), 0 6px 16px rgba(0, 0, 0, 0.4); }
+.key small { font-weight: 500; opacity: 0.75; }
+.meta { margin-top: 14px; color: var(--faint); font-size: 14px; }
+.meta a { color: var(--dim); }
+
+/* the app, framed like a machined bay */
+.shot { margin: 8px auto 0; padding: 10px; width: min(820px, 100%); border-radius: 16px;
+  background: linear-gradient(180deg, #2a2f35, #1c1f23);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px var(--edge), 0 40px 90px rgba(0, 0, 0, 0.6), 0 0 80px color-mix(in srgb, var(--light) 10%, transparent); }
+.shot img { border-radius: 9px; }
+
+/* sections */
+section { padding: 56px 0; }
+h2 { margin: 0 0 8px; font-weight: 800; font-stretch: 118%; font-size: clamp(26px, 3.6vw, 38px); letter-spacing: -0.01em; }
+.sub { margin: 0 0 30px; color: var(--dim); max-width: 64ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 14px; }
+.card { padding: 22px; border-radius: 14px; background: linear-gradient(180deg, #252a30, #1f2227); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 0 0 1px var(--edge); }
+.card h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 18px; font-weight: 700; font-stretch: 112%; }
+.card h3 i { width: 10px; height: 10px; border-radius: 50%; background: var(--light); box-shadow: 0 0 10px var(--light); flex: none; }
+.card p { margin: 0; color: var(--dim); font-size: 15.5px; }
+
+.distros { display: flex; flex-wrap: wrap; gap: 8px; }
+.distros span { padding: 7px 13px; border-radius: 999px; font-size: 14.5px; font-weight: 600; color: var(--dim); background: var(--groove); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.04); }
+
+table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
+th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--edge); }
+th { color: var(--faint); font-weight: 600; font-size: 14px; }
+td:not(:first-child), th:not(:first-child) { text-align: center; }
+td.us { color: var(--light); font-weight: 700; }
+.table { overflow-x: auto; border-radius: 14px; background: linear-gradient(180deg, #23272c, #1d2024); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px var(--edge); }
+
+pre { margin: 0; padding: 14px 16px; border-radius: 10px; overflow-x: auto; background: var(--groove); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7); font: 14.5px/1.5 ui-monospace, Consolas, monospace; color: #ffd9b3; }
+.install { display: grid; gap: 14px; }
+.install h3 { margin: 0 0 6px; font-size: 16px; color: var(--dim); font-weight: 600; }
+
+footer { padding: 40px 0 56px; color: var(--faint); font-size: 14px; text-align: center; }
+footer a { color: var(--dim); }
+
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .key { transition: none; } }
+@media (max-width: 640px) { .top nav a.hide-sm { display: none; } .hero { padding-top: 32px; } }
+
+/* grid children may shrink below their content (long commands scroll inside their box instead) */
+.hero > *, .grid > *, .install > * { min-width: 0; }

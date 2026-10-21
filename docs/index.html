@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>USBoot — Make bootable USB drives, every byte verified</title>
+  <meta name="description" content="Free, open-source bootable USB maker for Windows, Linux and macOS. 3 MB app with a live ISO library of 20 distros, multi-mirror downloads, Windows 11 without TPM, several drives at once. A Rufus and Etcher alternative.">
+  <link rel="canonical" href="https://bernaljeanp.github.io/usboot/">
+  <link rel="alternate" hreflang="en" href="https://bernaljeanp.github.io/usboot/">
+  <link rel="alternate" hreflang="es" href="https://bernaljeanp.github.io/usboot/es/">
+  <link rel="alternate" hreflang="x-default" href="https://bernaljeanp.github.io/usboot/">
+  <link rel="icon" href="favicon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="USBoot — bootable USB drives from a 3 MB app">
+  <meta property="og:description" content="Live ISO library, multi-mirror downloads, Windows 11 without TPM, several drives at once. Every byte verified.">
+  <meta property="og:image" content="https://bernaljeanp.github.io/usboot/og.jpg">
+  <meta property="og:url" content="https://bernaljeanp.github.io/usboot/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site.css">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"SoftwareApplication","name":"USBoot","applicationCategory":"UtilitiesApplication",
+   "operatingSystem":"Windows 10, Windows 11, Linux, macOS","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+   "downloadUrl":"https://github.com/bernaljeanp/usboot/releases/latest","license":"https://www.apache.org/licenses/LICENSE-2.0",
+   "description":"Make bootable USB drives from a 3 MB app, with a live ISO library and byte-for-byte verification."}
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="./"><img src="logo.png" alt="" width="34" height="34">USBoot</a>
+      <nav aria-label="Site">
+        <a class="hide-sm" href="#features">Features</a>
+        <a class="hide-sm" href="#install">Install</a>
+        <a href="es/" hreflang="es" lang="es">Español</a>
+        <a href="https://github.com/bernaljeanp/usboot">GitHub</a>
+      </nav>
+    </header>
+    <div class="led" aria-hidden="true"></div>
+
+    <main>
+      <div class="hero">
+        <div>
+          <h1>Bootable USB drives,<br><em>every byte verified.</em></h1>
+          <p>USBoot writes any ISO to a USB stick, then reads it all back to prove it. A built-in library always fetches the newest Ubuntu, Fedora, Mint or Arch from the fastest mirrors. A 3 MB app, free and open source.</p>
+          <div class="cta">
+            <a id="download" class="key" href="https://github.com/bernaljeanp/usboot/releases/latest"
+               data-win="Download for Windows" data-mac="Download for macOS (beta)" data-linux="Download for Linux (beta)">
+              <span>Download for Windows</span> <small id="version"></small>
+            </a>
+            <a class="key ghost" href="https://github.com/bernaljeanp/usboot">★ Star on GitHub</a>
+          </div>
+          <p class="meta">Windows 10/11 · Linux &amp; macOS (beta) · <a href="https://github.com/bernaljeanp/usboot/releases/latest">all downloads</a></p>
+        </div>
+        <div class="shot"><img src="demo.gif" width="760" height="543" alt="USBoot writing Linux Mint to a USB drive: a honeycomb map of the drive lights up as it writes, then a sweep verifies every byte"></div>
+      </div>
+
+      <section id="features">
+        <h2>Everything Rufus and Etcher do. Then some.</h2>
+        <p class="sub">Built in Rust, so it's tiny and fast. Nothing to configure: pick an image, pick a drive.</p>
+        <div class="grid">
+          <div class="card"><h3><i></i>Verified, byte for byte</h3><p>After writing, USBoot reads the whole drive back and compares it. A faulty or fake stick can't hide.</p></div>
+          <div class="card"><h3><i></i>Live ISO library</h3><p>20 distros, always the newest official release, read straight from each project's checksum file. No stale links.</p></div>
+          <div class="card"><h3><i></i>Multi-mirror downloads</h3><p>Measures the official mirrors, drops the slow ones and pulls from several at once. One test went from 44 KB/s to 16 MB/s.</p></div>
+          <div class="card"><h3><i></i>Windows 11, your way</h3><p>Install on PCs without TPM 2.0 or Secure Boot, with a local account instead of a Microsoft one, and no privacy questions.</p></div>
+          <div class="card"><h3><i></i>Several drives at once</h3><p>The same image onto every stick in parallel, each one verified on its own. Made for classrooms and repair shops.</p></div>
+          <div class="card"><h3><i></i>Restore any drive</h3><p>One click back to a normal stick with its full capacity. Fixes the "my 32 GB drive shows 4 MB" after flashing Linux.</p></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>The library</h2>
+        <p class="sub">Every download is checked against the project's official SHA-256 before you can use it.</p>
+        <div class="distros">
+          <span>Ubuntu</span><span>Ubuntu Server</span><span>Kubuntu</span><span>Xubuntu</span><span>Linux Mint</span><span>Zorin OS</span>
+          <span>Pop!_OS</span><span>Fedora</span><span>CachyOS</span><span>Bazzite</span><span>Debian</span><span>Arch Linux</span>
+          <span>openSUSE</span><span>Rocky Linux</span><span>AlmaLinux</span><span>Kali Linux</span><span>Parrot OS</span><span>Tails</span>
+          <span>Proxmox VE</span><span>Windows 11</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>How it compares</h2>
+        <div class="table">
+          <table>
+            <thead><tr><th></th><th>USBoot</th><th>balenaEtcher</th><th>Rufus</th></tr></thead>
+            <tbody>
+              <tr><td>Download size</td><td class="us">3 MB</td><td>~150 MB</td><td>~1.5 MB</td></tr>
+              <tr><td>Verifies after writing</td><td class="us">✓</td><td>✓</td><td>—</td></tr>
+              <tr><td>Windows install ISOs</td><td class="us">✓</td><td>—</td><td>✓</td></tr>
+              <tr><td>Linux ISO library with checksums</td><td class="us">✓</td><td>—</td><td>—</td></tr>
+              <tr><td>Several drives at once</td><td class="us">✓</td><td>✓</td><td>—</td></tr>
+              <tr><td>Windows · Linux · macOS</td><td class="us">✓</td><td>✓</td><td>Windows only</td></tr>
+              <tr><td>Telemetry</td><td class="us">none</td><td>yes</td><td>none</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="install">
+        <h2>Install</h2>
+        <div class="install">
+          <div><h3>Windows</h3><pre>winget install bernaljeanp.USBoot</pre></div>
+          <div><h3>macOS (Apple Silicon, beta)</h3><pre>brew install --cask --no-quarantine bernaljeanp/tap/usboot</pre></div>
+          <div><h3>Linux (beta)</h3><pre>.deb or .AppImage from the latest release on GitHub</pre></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      USBoot is free and open source (Apache-2.0) · <a href="https://github.com/bernaljeanp/usboot">Source on GitHub</a> · Sibling of <a href="https://github.com/bernaljeanp/purge">Purge</a>
+    </footer>
+  </div>
+  <script src="site.js"></script>
+</body>
+</html>
