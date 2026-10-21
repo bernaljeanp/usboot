@@ -5,7 +5,7 @@
 <h1 align="center">USBoot</h1>
 
 <p align="center">
-  Make bootable USB drives — Linux or Windows — from a <b>2.7 MB</b> app. Every byte verified.
+  Make bootable USB drives — Linux or Windows — from a <b>3 MB</b> app. Every byte verified.
 </p>
 
 <p align="center">
@@ -46,7 +46,7 @@ Same app, same features except Windows mode. It runs as your user and asks for y
 
 | | USBoot | balenaEtcher | Rufus |
 |---|---|---|---|
-| Download size | **2.7 MB** | ~150 MB | ~1.5 MB |
+| Download size (Windows) | **3 MB** | ~150 MB | ~1.5 MB |
 | Verifies after writing | ✅ | ✅ | — |
 | Windows ISOs | ✅ | — | ✅ |
 | Built-in ISO library with checksums | ✅ | — | Windows only |
