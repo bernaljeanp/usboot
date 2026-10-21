@@ -17,6 +17,12 @@
   <img src="docs/demo.gif" width="760" alt="USBoot writing Linux Mint to a USB drive: the sector map lights up as it writes, then a sweep verifies every byte">
 </p>
 
+## Install
+
+- **Windows:** [download the installer](https://github.com/bernaljeanp/usboot/releases/latest) — or `winget install bernaljeanp.USBoot` (once the winget review is done)
+- **macOS (beta, Apple Silicon):** `brew install --cask --no-quarantine bernaljeanp/tap/usboot`
+- **Linux (beta):** `.deb` or `.AppImage` from the [latest release](https://github.com/bernaljeanp/usboot/releases/latest)
+
 ## What it does
 
 - **Flash any ISO or IMG** byte for byte, then **read it all back** and compare. A bad or fake drive can't hide.
