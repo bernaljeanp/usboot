@@ -46,7 +46,7 @@ mockIPC(
       case "os_locale": return new URLSearchParams(location.search).get("lang") ?? "es-CL";
       case "is_admin": return true;
       case "list_drives": return drives;
-      case "inspect_image": return { path: args.path, name: args.path.split(/[\\/]/).pop(), size: 2.88 * GB, bootable: true, windows: args.path.includes("Win") };
+      case "inspect_image": return { path: args.path, name: args.path.split(/[\\/]/).pop(), size: 2.88 * GB, bootable: true, windows: args.path.includes("Win"), compressed: /\.(xz|gz|zst)$/i.test(args.path) };
       case "library": return library;
       case "flash":
         // each drive at its own pace, like real sticks

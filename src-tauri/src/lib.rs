@@ -2,6 +2,7 @@ mod drives;
 mod flash;
 mod image;
 mod library;
+mod unpack;
 mod windows;
 
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -29,6 +30,11 @@ fn emit_progress(app: &AppHandle, drive: u32, p: flash::Progress) {
 #[tauri::command(async)]
 fn flash(app: AppHandle, path: String, drives: Vec<drives::Drive>) -> Vec<Option<String>> {
     CANCEL.store(false, Ordering::SeqCst);
+    // A compressed image is unpacked once, then every drive gets the same plain image.
+    let path = match unpack::unpack(&path, &CANCEL, |p| drives.iter().for_each(|d| emit_progress(&app, d.number, p.clone()))) {
+        Ok(p) => p,
+        Err(e) => return drives.iter().map(|_| Some(e.clone())).collect(),
+    };
     std::thread::scope(|s| {
         let jobs: Vec<_> = drives
             .iter()

@@ -1,6 +1,5 @@
 //! What's inside an image, read from its first 34 KB.
 use serde::Serialize;
-use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
@@ -14,6 +13,8 @@ pub struct ImageInfo {
     pub bootable: bool,
     /// A Windows install ISO: not hybrid, a raw copy will not boot.
     pub windows: bool,
+    /// .xz / .gz / .zst: unpacked before flashing; `size` is the compressed size.
+    pub compressed: bool,
 }
 
 /// Fills `buf` unless the reader ends first; returns how much was read.
@@ -29,10 +30,11 @@ pub fn read_full(r: &mut impl Read, buf: &mut [u8]) -> std::io::Result<usize> {
 }
 
 pub fn inspect(path: &str) -> Result<ImageInfo, String> {
-    let mut f = File::open(path).map_err(|e| e.to_string())?;
-    let size = f.metadata().map_err(|e| e.to_string())?.len();
+    let size = std::fs::metadata(path).map_err(|e| e.to_string())?.len();
+    // Compressed or not, look at the first decompressed bytes.
+    let (mut f, _) = crate::unpack::open(path)?;
     let mut head = vec![0u8; 0x8800];
-    let n = read_full(&mut f, &mut head).map_err(|e| e.to_string())?;
+    let n = read_full(&mut f, &mut head).map_err(|e| format!("unpackFailed|{e}"))?;
     head.truncate(n);
     Ok(ImageInfo {
         path: path.to_string(),
@@ -40,6 +42,7 @@ pub fn inspect(path: &str) -> Result<ImageInfo, String> {
         size,
         bootable: head.get(510..512) == Some(&[0x55, 0xAA]),
         windows: is_windows_iso(&head),
+        compressed: crate::unpack::is_compressed(path),
     })
 }
 

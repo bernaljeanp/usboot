@@ -26,6 +26,9 @@ sys-locale = "0.3"
 tauri-plugin-opener = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+flate2 = "1"
+xz2 = { version = "0.1", features = ["static"] }
+zstd = "0.13"
 
 [profile.release]
 codegen-units = 1

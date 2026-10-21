@@ -15,11 +15,11 @@ import { errText, fmtSize, nf, t } from "./i18n";
 import "./App.css";
 
 type Drive = { number: number; name: string; size: number; serial: string; letters: string[] };
-type Image = { path: string; name: string; size: number; bootable: boolean; windows: boolean };
-type Phase = "write" | "verify" | "prepare" | "copy" | "split";
+type Image = { path: string; name: string; size: number; bootable: boolean; windows: boolean; compressed: boolean };
+type Phase = "unpack" | "write" | "verify" | "prepare" | "copy" | "split";
 type Progress = { drive: number; phase: Phase; done: number; total: number };
 /** One entry per drive being flashed; several can run at once. */
-type Running = { kind: "running"; per: Record<number, Progress>; since: number; windows: boolean; count: number };
+type Running = { kind: "running"; per: Record<number, Progress>; since: number; windows: boolean; compressed: boolean; count: number };
 type Run =
   | { kind: "confirm" }
   | Running
@@ -42,12 +42,13 @@ const driveLabel = (d: Drive) => (d.letters.length ? `${d.name} (${d.letters.map
 const isExternalDisk = (d: Drive) => d.size > 128 * 1024 ** 3;
 const sameDrive = (a: Drive, b: Drive) => a.number === b.number && a.serial === b.serial && a.size === b.size;
 
-// Windows mode has its own steps; a raw image is write then verify.
-const phasesOf = (windows: boolean): Phase[] => (windows ? ["prepare", "copy", "split"] : ["write", "verify"]);
+// Windows mode has its own steps; a raw image is write then verify, unpacked first if compressed.
+const phasesOf = (r: { windows: boolean; compressed: boolean }): Phase[] =>
+  r.windows ? ["prepare", "copy", "split"] : r.compressed ? ["unpack", "write", "verify"] : ["write", "verify"];
 
 /** All drives folded into one: overall fraction, the slowest drive's step, and bytes processed. */
 function overall(r: Running) {
-  const phases = phasesOf(r.windows);
+  const phases = phasesOf(r);
   const ps = Object.values(r.per);
   const step = (p: Progress) => Math.max(0, phases.indexOf(p.phase));
   const frac = ps.reduce((a, p) => a + (step(p) + (p.total ? p.done / p.total : 0)) / phases.length, 0) / r.count;
@@ -140,14 +141,14 @@ export default function App() {
     setPicked((ps) => (ps.some((x) => sameDrive(x, d)) ? ps.filter((x) => !sameDrive(x, d)) : image?.windows ? [d] : [...ps, d]));
 
   const chooseFile = async () => {
-    const path = await open({ multiple: false, filters: [{ name: t.diskImage, extensions: ["iso", "img", "bin", "raw"] }] });
+    const path = await open({ multiple: false, filters: [{ name: t.diskImage, extensions: ["iso", "img", "bin", "raw", "xz", "gz", "zst"] }] });
     if (typeof path === "string") pick(path);
   };
 
   const flash = async () => {
     if (!image || !picked.length) return;
     const targets = image.windows ? picked.slice(0, 1) : picked;
-    setRun({ kind: "running", per: {}, since: Date.now(), windows: image.windows, count: targets.length });
+    setRun({ kind: "running", per: {}, since: Date.now(), windows: image.windows, compressed: image.compressed, count: targets.length });
     try {
       if (image.windows) {
         const options = { bypassRequirements: win.bypass, localAccount: win.local ? win.user : null, skipPrivacy: win.privacy };
@@ -189,13 +190,15 @@ export default function App() {
   const reserve = image && drive ? Math.min(1, image.size / drive.size) : 0;
   const frac = ov ? ov.frac : 0;
   const flashed = run?.kind === "done" && run.flashed;
+  // Map cells follow the write step, then the verify step (whatever came before them, like unpacking).
+  const stepFrac = (ph: Phase) => (ov && ov.phases.includes(ph) ? Math.min(1, Math.max(0, frac * ov.phases.length - ov.phases.indexOf(ph))) : 0);
   const raw = run?.kind === "running" && !run.windows;
   // Idle, the map is the whole drive with the image's share outlined; once writing starts it
   // zooms to the image itself so every cell lights up. A raw flash is half writing, half verifying.
   const zoomed = run?.kind === "running" || flashed;
   const mapReserve = zoomed ? 1 : reserve;
-  const written = !zoomed ? 0 : flashed ? 1 : raw ? Math.min(1, frac * 2) : frac;
-  const verified = flashed ? 1 : raw ? Math.max(0, frac * 2 - 1) : 0;
+  const written = !zoomed ? 0 : flashed ? 1 : raw ? stepFrac("write") : frac;
+  const verified = flashed ? 1 : raw ? stepFrac("verify") : 0;
 
   return (
     <div className="shell" style={{ "--light": writing ? "#ff453a" : LIGHTS[light] } as CSSProperties}>
@@ -288,6 +291,7 @@ export default function App() {
                         <span className={`tag ${image.bootable || image.windows ? "file" : ""}`}>
                           {image.windows ? "Windows" : image.bootable ? t.bootable : t.notBootable}
                         </span>
+                        {image.compressed && <span className="tag">{t.compressed}</span>}
                       </span>
                     </span>
                   </button>
