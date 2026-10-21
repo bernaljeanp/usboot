@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/flash.jpg" width="820" alt="USBoot writing Linux Mint to a USB drive, the sector map lighting up">
+  <img src="docs/demo.gif" width="760" alt="USBoot writing Linux Mint to a USB drive: the sector map lights up as it writes, then a sweep verifies every byte">
 </p>
 
 ## What it does
