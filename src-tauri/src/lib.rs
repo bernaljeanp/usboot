@@ -3,7 +3,24 @@ mod flash;
 mod image;
 mod library;
 mod unpack;
+#[cfg(windows)]
 mod windows;
+
+/// Windows mode needs diskpart, DISM and Mount-DiskImage: Windows only for now.
+#[cfg(not(windows))]
+mod windows {
+    #[derive(serde::Deserialize, Default, Debug)]
+    pub struct Options {}
+    pub fn run(
+        _: &str,
+        _: &crate::drives::Drive,
+        _: &Options,
+        _: &std::sync::atomic::AtomicBool,
+        _: impl FnMut(crate::flash::Progress),
+    ) -> Result<(), String> {
+        Err("windowsModeOnly".into())
+    }
+}
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{AppHandle, Emitter};
@@ -90,7 +107,11 @@ fn os_locale() -> String {
 /// Opening a physical disk at all needs admin, so this is the exact check that matters.
 #[tauri::command]
 fn is_admin() -> bool {
-    std::fs::File::open(r"\\.\PhysicalDrive0").is_ok()
+    #[cfg(windows)]
+    return std::fs::File::open(r"\\.\PhysicalDrive0").is_ok();
+    // Linux/macOS ask for the password per drive, through the system dialog.
+    #[cfg(not(windows))]
+    true
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

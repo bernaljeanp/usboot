@@ -7,7 +7,6 @@ use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{Read, Write};
-use std::os::windows::fs::FileExt;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -467,8 +466,26 @@ fn resolve(d: &Distro) -> Result<Release, String> {
     Ok(Release { version, file, url, sha256, size })
 }
 
+/// Positional write, so parallel connections can fill their own ranges of one file.
+fn write_at(file: &File, buf: &[u8], at: u64) -> std::io::Result<()> {
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::FileExt;
+        let mut done = 0;
+        while done < buf.len() {
+            done += file.seek_write(&buf[done..], at + done as u64)?;
+        }
+        Ok(())
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::FileExt;
+        file.write_all_at(buf, at)
+    }
+}
+
 pub fn folder() -> PathBuf {
-    let home = std::env::var_os("USERPROFILE").map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
+    let home = std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")).map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
     home.join("Downloads").join("USBoot")
 }
 
@@ -668,7 +685,7 @@ fn fetch_range(url: &str, start: u64, end: u64, file: &File, buf: &mut [u8], don
             Ok(0) | Err(_) => return Err(at - start),
             Ok(n) => n.min((end + 1 - at) as usize),
         };
-        file.seek_write(&buf[..n], at).map_err(|_| at - start)?;
+        write_at(file, &buf[..n], at).map_err(|_| at - start)?;
         at += n as u64;
         done.fetch_add(n as u64, Ordering::Relaxed);
     }

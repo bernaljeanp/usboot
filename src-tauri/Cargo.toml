@@ -36,3 +36,9 @@ lto = true
 opt-level = 3
 panic = "abort"
 strip = true
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+plist = "1"

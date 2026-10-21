@@ -4505,6 +4505,8 @@ name = "usboot"
 version = "0.1.0"
 dependencies = [
  "flate2",
+ "libc",
+ "plist",
  "regex",
  "serde",
  "serde_json",
