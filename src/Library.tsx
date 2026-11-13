@@ -30,7 +30,7 @@ const LOGOS: Record<string, { path?: string; svg?: string; viewBox?: string; hex
   rocky: siRockylinux, alma: siAlmalinux, kali: siKalilinux, tails: siTails, proxmox: siProxmox,
   lubuntu: siLubuntu, "ubuntu-mate": siUbuntumate, nobara: siNobaralinux, devuan: siDevuan, nixos: siNixos,
   void: siVoidlinux, gentoo: siGentoo, solus: siSolus, alpine: siAlpinelinux, centos: siCentos, qubes: siQubesos,
-  raspios: siRaspberrypi, openbsd: siOpenbsd, lmde: siLinuxmint,
+  raspios: siRaspberrypi, openbsd: siOpenbsd, lmde: siLinuxmint, edubuntu: siUbuntu,
   windows11: { path: "M3 3h8.4v8.4H3zm9.6 0H21v8.4h-8.4zM3 12.6h8.4V21H3zm9.6 0H21V21h-8.4z", hex: "3BA7F0" },
 };
 
@@ -132,7 +132,7 @@ export default function Library({ hidden, onUse }: { hidden: boolean; onUse: (pa
       ) : (
         <>
         <div className="toolbar">
-          <label className="search">
+          <label className="search wide">
             <Search size={15} />
             <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t.searchLibrary(entries.length)} aria-label={t.searchLibrary(entries.length)} />
           </label>

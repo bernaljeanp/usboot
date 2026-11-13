@@ -119,6 +119,7 @@ h1 { margin: 0; font-weight: 800; font-stretch: 125%; font-size: 32px; line-heig
   background: var(--groove); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.04); border: 0;
 }
 .search input { width: 250px; border: 0; outline: 0; background: none; color: var(--ink); }
+.search.wide input { width: 320px; }
 .search:focus-within { color: var(--light); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--light); }
 .field { flex: 1; min-width: 200px; color: var(--ink); outline: 0; }
 .field:focus { box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--light); }

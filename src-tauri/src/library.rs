@@ -1087,7 +1087,24 @@ fn write_at(file: &File, buf: &[u8], at: u64) -> std::io::Result<()> {
 
 pub fn folder() -> PathBuf {
     let home = std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")).map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
+    // On Linux the folder is translated ("Descargas", "Téléchargements"…): ask the desktop where it is.
+    #[cfg(target_os = "linux")]
+    if let Some(dir) = std::fs::read_to_string(home.join(".config/user-dirs.dirs")).ok().and_then(|t| xdg_download_dir(&t, &home)) {
+        return dir.join("USBoot");
+    }
     home.join("Downloads").join("USBoot")
+}
+
+/// The `XDG_DOWNLOAD_DIR="$HOME/Descargas"` line of user-dirs.dirs.
+#[cfg(any(target_os = "linux", test))]
+fn xdg_download_dir(user_dirs: &str, home: &std::path::Path) -> Option<PathBuf> {
+    let value = user_dirs.lines().find_map(|l| l.trim().strip_prefix("XDG_DOWNLOAD_DIR="))?.trim().trim_matches('"');
+    let dir = match value.strip_prefix("$HOME/") {
+        Some(rest) => home.join(rest),
+        None => PathBuf::from(value),
+    };
+    // "$HOME/" alone means the desktop has no downloads folder.
+    (dir.is_absolute() && dir != home).then_some(dir)
 }
 
 /// The hash we verified when the file finished downloading, kept next to it.
@@ -1353,6 +1370,16 @@ mod tests {
             Source::Sums { iso, .. } => full(iso),
             _ => unreachable!(),
         }
+    }
+
+    #[test]
+    fn finds_the_translated_downloads_folder() {
+        let home = std::path::Path::new("/home/ana");
+        let dirs = "# comment\nXDG_DESKTOP_DIR=\"$HOME/Escritorio\"\nXDG_DOWNLOAD_DIR=\"$HOME/Descargas\"\n";
+        assert_eq!(xdg_download_dir(dirs, home), Some(PathBuf::from("/home/ana/Descargas")));
+        assert_eq!(xdg_download_dir("XDG_DOWNLOAD_DIR=\"/mnt/big/dl\"", home), Some(PathBuf::from("/mnt/big/dl")));
+        assert_eq!(xdg_download_dir("XDG_DOWNLOAD_DIR=\"$HOME/\"", home), None);
+        assert_eq!(xdg_download_dir("XDG_MUSIC_DIR=\"$HOME/Música\"", home), None);
     }
 
     #[test]
