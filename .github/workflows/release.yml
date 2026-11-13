@@ -1,0 +1,84 @@
+# Pushing a tag like v0.2.2 builds signed bundles on Windows, Linux and macOS and puts them, with the
+# latest.json the in-app updater reads, on a DRAFT release. Look it over, then publish it:
+#   gh release edit v0.2.2 --draft=false
+# Needs two repository secrets: TAURI_SIGNING_PRIVATE_KEY (the contents of usboot.key) and
+# TAURI_SIGNING_PRIVATE_KEY_PASSWORD (empty if the key has none).
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            bundles: nsis
+          - os: ubuntu-22.04
+            bundles: deb,appimage
+          - os: macos-latest
+            bundles: app,dmg
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - run: npm ci
+      - name: Tag matches the app version
+        shell: bash
+        run: test "v$(node -p "require('./src-tauri/tauri.conf.json').version")" = "$GITHUB_REF_NAME"
+      - name: Tests
+        working-directory: src-tauri
+        run: cargo test
+      - name: Build (signed for the updater)
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npx tauri build --bundles ${{ matrix.bundles }}
+      - name: Collect bundles
+        shell: bash
+        run: node scripts/collect.mjs src-tauri/target/release/bundle out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ runner.os }}
+          path: out/*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          pattern: release-*
+          merge-multiple: true
+      - name: latest.json for the updater
+        run: |
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > notes.md
+          node scripts/latest-json.mjs out notes.md
+          cat out/latest.json
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm out/*.sig
+          gh release create "$GITHUB_REF_NAME" out/* --draft --title "USBoot ${GITHUB_REF_NAME#v}" --notes-file notes.md

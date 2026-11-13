@@ -4,7 +4,6 @@ name: build
 on:
   push:
     branches: [main, "feat/**"]
-    tags: ["v*"]
   workflow_dispatch:
 
 jobs:
@@ -37,7 +36,7 @@ jobs:
       - name: Tests
         working-directory: src-tauri
         run: cargo test
-      # Updater signing needs the private key, which only the release script has; CI builds unsigned bundles.
+      # Unsigned bundles here; the signed ones for the updater come from release.yml when a tag is pushed.
       - name: Build
         shell: bash
         run: npx tauri build --bundles ${{ matrix.bundles }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
