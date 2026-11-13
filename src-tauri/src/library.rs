@@ -1096,7 +1096,7 @@ pub fn folder() -> PathBuf {
 }
 
 /// The `XDG_DOWNLOAD_DIR="$HOME/Descargas"` line of user-dirs.dirs.
-#[cfg(any(target_os = "linux", test))]
+#[cfg(target_os = "linux")]
 fn xdg_download_dir(user_dirs: &str, home: &std::path::Path) -> Option<PathBuf> {
     let value = user_dirs.lines().find_map(|l| l.trim().strip_prefix("XDG_DOWNLOAD_DIR="))?.trim().trim_matches('"');
     let dir = match value.strip_prefix("$HOME/") {
@@ -1372,6 +1372,8 @@ mod tests {
         }
     }
 
+    // Linux paths: "/home/ana" isn't an absolute path on Windows.
+    #[cfg(target_os = "linux")]
     #[test]
     fn finds_the_translated_downloads_folder() {
         let home = std::path::Path::new("/home/ana");
