@@ -52,7 +52,7 @@ fn flash(app: AppHandle, path: String, drives: Vec<drives::Drive>) -> Vec<Option
         Ok(p) => p,
         Err(e) => return drives.iter().map(|_| Some(e.clone())).collect(),
     };
-    std::thread::scope(|s| {
+    let results: Vec<Option<String>> = std::thread::scope(|s| {
         let jobs: Vec<_> = drives
             .iter()
             .map(|d| {
@@ -61,7 +61,12 @@ fn flash(app: AppHandle, path: String, drives: Vec<drives::Drive>) -> Vec<Option
             })
             .collect();
         jobs.into_iter().map(|j| j.join().unwrap_or_else(|_| Err("crashed".into())).err()).collect()
-    })
+    });
+    // Kept after a failure so a retry doesn't unpack again; gone once every drive is done.
+    if results.iter().all(Option::is_none) {
+        unpack::cleanup();
+    }
+    results
 }
 
 /// Windows install ISOs: GPT + FAT32 + copied files instead of a raw copy.
@@ -116,6 +121,7 @@ fn is_admin() -> bool {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    unpack::cleanup();
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())

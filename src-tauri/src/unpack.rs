@@ -1,5 +1,5 @@
 //! Compressed images (.img.xz, .iso.gz, .img.zst — how Raspberry Pi OS, SteamOS and others ship):
-//! unpacked once to a temp file, then flashed and verified like any other image.
+//! unpacked once to a file on disk, then flashed and verified like any other image.
 use crate::flash::{CANCELLED, Progress};
 use std::fs::{self, File};
 use std::io::{BufReader, Read, Write};
@@ -49,6 +49,25 @@ pub fn open(path: &str) -> Result<(Box<dyn Read>, Arc<AtomicU64>), String> {
     Ok((decoder, read))
 }
 
+/// Where unpacked images live. On Linux /tmp is usually RAM (tmpfs, capped at half the memory), far
+/// too small for a 10 GB image, so they go to the user's cache folder on a real disk instead.
+pub fn dir() -> PathBuf {
+    #[cfg(target_os = "linux")]
+    let base = std::env::var_os("XDG_CACHE_HOME")
+        .map(PathBuf::from)
+        .filter(|p| p.is_absolute())
+        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))
+        .unwrap_or_else(std::env::temp_dir);
+    #[cfg(not(target_os = "linux"))]
+    let base = std::env::temp_dir();
+    base.join("usboot-unpacked")
+}
+
+/// Unpacked images are several GB each: they're dropped once flashed, and at startup if a run was cut short.
+pub fn cleanup() {
+    let _ = fs::remove_dir_all(dir());
+}
+
 /// "raspios.img.xz" -> "raspios.img"; a bare "image.xz" becomes "image.img".
 fn unpacked_name(path: &Path) -> String {
     let stem = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
@@ -63,7 +82,7 @@ pub fn unpack(path: &str, cancel: &AtomicBool, mut emit: impl FnMut(Progress)) -
     }
     let meta = fs::metadata(src).map_err(|e| e.to_string())?;
     let stamp = format!("{path}|{}|{:?}", meta.len(), meta.modified().ok());
-    let dir = std::env::temp_dir().join("usboot-unpacked");
+    let dir = dir();
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let out = dir.join(unpacked_name(src));
     let marker = PathBuf::from(format!("{}.src", out.display()));

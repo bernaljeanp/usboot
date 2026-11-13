@@ -241,6 +241,10 @@ pub fn write_and_verify(
                 if phase == "write" {
                     buf[n..padded].fill(0);
                     out.write_all(&buf[..padded]).map_err(io_msg)?;
+                    // Linux buffers block-device writes in RAM: without this the bar races to 100% and
+                    // then sits there for minutes while the kernel does the real writing.
+                    #[cfg(target_os = "linux")]
+                    out.sync_data().map_err(io_msg)?;
                 } else {
                     read_full(&mut out, &mut back[..padded]).map_err(io_msg)?;
                     if let Some(i) = buf[..n].iter().zip(&back[..n]).position(|(a, b)| a != b) {
