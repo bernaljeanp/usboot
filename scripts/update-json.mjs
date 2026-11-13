@@ -1,5 +1,7 @@
-// CI: writes the latest.json the in-app updater reads, from the signed bundles collect.mjs gathered.
-//   node scripts/latest-json.mjs <dir with the bundles and .sig files> [release notes file]
+// CI: writes update.json, the manifest the in-app updater reads, from the signed bundles collect.mjs gathered.
+// (Up to 0.2.1 it was latest.json, signed with a key that no longer exists: those installs look for the old
+// name, find nothing and stay quiet, instead of being offered an update they could not verify.)
+//   node scripts/update-json.mjs <dir with the bundles and .sig files> [release notes file]
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -30,5 +32,5 @@ for (const [file, keys] of Object.entries(targets)) {
 for (const must of ["windows-x86_64", "linux-x86_64", "darwin-aarch64"]) {
   if (!platforms[must]) throw new Error(`No signed bundle for ${must}: is TAURI_SIGNING_PRIVATE_KEY set?`);
 }
-writeFileSync(join(dir, "latest.json"), JSON.stringify({ version, notes, pub_date: new Date().toISOString(), platforms }, null, 2));
-console.log(`latest.json: ${Object.keys(platforms).join(", ")}`);
+writeFileSync(join(dir, "update.json"), JSON.stringify({ version, notes, pub_date: new Date().toISOString(), platforms }, null, 2));
+console.log(`update.json: ${Object.keys(platforms).join(", ")}`);

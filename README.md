@@ -88,7 +88,9 @@ Bump the version in `package.json`, `src-tauri/Cargo.toml` and `src-tauri/tauri.
 git tag -a v0.2.2 -m "What changed" && git push origin v0.2.2
 ```
 
-GitHub Actions builds and signs the Windows, Linux and macOS bundles, writes the `latest.json` the in-app updater reads and attaches everything to a **draft** release. Check it, then `gh release edit v0.2.2 --draft=false`. It needs two repository secrets: `TAURI_SIGNING_PRIVATE_KEY` (the contents of the updater key) and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+GitHub Actions builds and signs the Windows, Linux and macOS bundles, writes the `update.json` the in-app updater reads and attaches everything to a **draft** release. Check it, then `gh release edit v0.2.2 --draft=false`. It needs the repository secret `TAURI_SIGNING_PRIVATE_KEY` (the contents of the updater key; keep a backup of that file — without it, installed copies can never be updated again).
+
+Installs of 0.2.1 or older were signed with an earlier key and can't update themselves: they need one manual download.
 
 Built with [Tauri 2](https://tauri.app) (Rust) and React. Sibling of [Purge](https://github.com/bernaljeanp/purge).
 
