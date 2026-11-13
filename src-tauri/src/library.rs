@@ -4,11 +4,11 @@
 use regex::Regex;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, OnceLock};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
@@ -952,6 +952,22 @@ fn get_text(url: &str) -> Result<String, String> {
     agent().get(url).call().map_err(|e| e.to_string())?.into_string().map_err(|e| e.to_string())
 }
 
+/// Pages already fetched during one refresh of the library. Many editions read the same page (eight
+/// Fedoras share one release listing, three Mints one checksum file): each URL is asked for once,
+/// and whoever asks meanwhile waits for that answer instead of sending the request again.
+#[derive(Default)]
+struct Pages(Mutex<HashMap<String, Page>>);
+
+/// Filled in by the first thread to ask; the others wait on it.
+type Page = Arc<OnceLock<Result<String, String>>>;
+
+impl Pages {
+    fn get(&self, url: &str) -> Result<String, String> {
+        let page = self.0.lock().unwrap_or_else(|e| e.into_inner()).entry(url.to_string()).or_default().clone();
+        page.get_or_init(|| get_text(url)).clone()
+    }
+}
+
 /// "26.04.1" -> [26, 4, 1], so versions compare as numbers, not text.
 fn version_key(v: &str) -> Vec<u64> {
     v.split(|c: char| !c.is_ascii_digit()).filter_map(|n| n.parse().ok()).collect()
@@ -1036,7 +1052,7 @@ fn tails() -> Result<Release, String> {
     })
 }
 
-fn resolve(d: &Distro) -> Result<Release, String> {
+fn resolve(d: &Distro, pages: &Pages) -> Result<Release, String> {
     let (index, dir, sums, iso, fetch) = match &d.source {
         Source::Sums { index, dir, sums, iso, fetch } => (index, dir, sums, iso, fetch),
         Source::Api(f) => return f(),
@@ -1045,7 +1061,7 @@ fn resolve(d: &Distro) -> Result<Release, String> {
     let v = match index {
         Some((url, pattern)) => {
             let re = Regex::new(pattern).unwrap();
-            let page = get_text(url)?;
+            let page = pages.get(url)?;
             re.captures_iter(&page).map(|c| c[1].to_string()).max_by_key(|v| version_key(v)).ok_or("No releases listed")?
         }
         None => String::new(),
@@ -1054,12 +1070,12 @@ fn resolve(d: &Distro) -> Result<Release, String> {
     let sums_name = match sums {
         Sums::File(name) => name.replace("{v}", &v),
         Sums::Find(pattern) => {
-            let listing = get_text(&dir)?;
+            let listing = pages.get(&dir)?;
             let re = Regex::new(pattern).unwrap();
             re.find_iter(&listing).map(|m| m.as_str().to_string()).max_by_key(|n| version_key(n)).ok_or("No checksum file")?
         }
     };
-    let (version, file, sha256) = newest(&parse_sums(&get_text(&format!("{dir}{sums_name}"))?), &full(iso)).ok_or("No ISO in the checksum file")?;
+    let (version, file, sha256) = newest(&parse_sums(&pages.get(&format!("{dir}{sums_name}"))?), &full(iso)).ok_or("No ISO in the checksum file")?;
     let url = format!("{dir}{}", fetch.unwrap_or(&file));
     // Checksum files sometimes list ISOs that aren't uploaded yet: make sure it's really there.
     let head = agent().head(&url).call().map_err(|e| format!("notUploaded|{file} ({e})"))?;
@@ -1107,6 +1123,24 @@ fn xdg_download_dir(user_dirs: &str, home: &std::path::Path) -> Option<PathBuf> 
     (dir.is_absolute() && dir != home).then_some(dir)
 }
 
+/// A file name with nothing in it that could point outside the folder it's saved to.
+fn plain_name(file: &str) -> bool {
+    !file.is_empty() && !file.starts_with('.') && !file.contains(['/', '\\', ':'])
+}
+
+/// Before 0.2.2 the library always saved to ~/Downloads, even where that folder has another name:
+/// bring what's there over to the real one, once, so earlier downloads still show as ready.
+pub fn migrate_folder() {
+    #[cfg(target_os = "linux")]
+    if let Some(home) = std::env::var_os("HOME").map(PathBuf::from) {
+        let (old, new) = (home.join("Downloads").join("USBoot"), folder());
+        if old != new && old.is_dir() && !new.exists() && new.parent().is_some_and(|p| p.is_dir()) && std::fs::rename(&old, &new).is_ok() {
+            // Only goes away if USBoot's folder was all it held.
+            let _ = std::fs::remove_dir(home.join("Downloads"));
+        }
+    }
+}
+
 /// The hash we verified when the file finished downloading, kept next to it.
 fn verified_hash(file: &str) -> Option<String> {
     std::fs::read_to_string(folder().join(format!("{file}.sha256"))).ok().map(|s| s.trim().to_string())
@@ -1116,8 +1150,10 @@ pub fn list() -> Vec<Entry> {
     let files: Vec<String> = std::fs::read_dir(folder())
         .map(|it| it.filter_map(|e| e.ok()).map(|e| e.file_name().to_string_lossy().into_owned()).collect())
         .unwrap_or_default();
+    // Lives outside the scope below: the threads borrow it.
+    let pages = &Pages::default();
     std::thread::scope(|s| {
-        let jobs: Vec<_> = CATALOG.iter().map(|d| (d, s.spawn(|| resolve(d)))).collect();
+        let jobs: Vec<_> = CATALOG.iter().map(|d| (d, s.spawn(move || resolve(d, pages)))).collect();
         jobs.into_iter()
             .map(|(d, job)| {
                 let page = match d.source {
@@ -1199,7 +1235,11 @@ fn fast_mirrors(d: &Distro, r: &Release) -> Vec<String> {
 pub fn download(id: &str, mut emit: impl FnMut(DownloadProgress)) -> Result<String, String> {
     take_cancel(id);
     let d = CATALOG.iter().find(|d| d.id == id).ok_or("Unknown distro")?;
-    let r = resolve(d)?;
+    let r = resolve(d, &Pages::default())?;
+    // The name comes from the project's server and becomes a file in the downloads folder: it must be a plain name.
+    if !plain_name(&r.file) {
+        return Err(format!("Unexpected file name: {}", r.file));
+    }
     std::fs::create_dir_all(folder()).map_err(|e| e.to_string())?;
     let dest = folder().join(&r.file);
     let part = folder().join(format!("{}.part", r.file));
@@ -1385,6 +1425,24 @@ mod tests {
     }
 
     #[test]
+    fn only_plain_file_names_are_saved() {
+        assert!(plain_name("ubuntu-26.04.1-desktop-amd64.iso") && plain_name("2026-10-06-raspios-trixie-arm64.img.xz"));
+        for bad in ["", "..", ".hidden.iso", "../x.iso", "a/b.iso", r"..\\x.iso", r"C:\\x.iso"] {
+            assert!(!plain_name(bad), "{bad}");
+        }
+    }
+
+    #[test]
+    fn pages_are_fetched_once() {
+        let pages = Pages::default();
+        // No server listens on port 1: the first failure is remembered rather than retried.
+        let first = pages.get("http://127.0.0.1:1/x");
+        assert!(first.is_err());
+        assert_eq!(pages.get("http://127.0.0.1:1/x"), first);
+        assert_eq!(pages.0.lock().unwrap().len(), 1);
+    }
+
+    #[test]
     fn catalog_ids_are_unique_and_patterns_compile() {
         let mut seen = HashSet::new();
         for d in CATALOG {
@@ -1476,7 +1534,7 @@ mod tests {
     #[ignore]
     fn mirrors_beat_a_single_stream() {
         let d = CATALOG.iter().find(|d| d.id == "arch").unwrap();
-        let r = resolve(d).unwrap();
+        let r = resolve(d, &Pages::default()).unwrap();
         let t = Instant::now();
         let fast = fast_mirrors(d, &r);
         println!("probe {:?}: {fast:?}", t.elapsed());

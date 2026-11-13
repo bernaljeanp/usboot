@@ -43,6 +43,7 @@ const en = {
   verifying: "Verifying",
   done: "Done",
   doneBody: "Written and verified. You can unplug the drive.",
+  doneWindows: "Windows installer ready. You can unplug the drive.",
   cancelled: "Cancelled. The drive is incomplete — flash it again or format it.",
   close: "Close",
   // Library subtitles come from the Rust catalog in English; translate them here.
@@ -153,6 +154,7 @@ const es: Dict = {
   verifying: "Verificando",
   done: "Listo",
   doneBody: "Grabado y verificado. Ya puedes desconectar el pendrive.",
+  doneWindows: "Instalador de Windows listo. Ya puedes desconectar el pendrive.",
   cancelled: "Cancelado. La unidad quedó incompleta: vuelve a grabarla o formatéala.",
   close: "Cerrar",
   descs: {

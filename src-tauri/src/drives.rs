@@ -38,7 +38,7 @@ pub fn powershell(script: &str) -> Result<String, String> {
 #[cfg(windows)]
 const LIST: &str = r#"
 ConvertTo-Json -Compress -InputObject @(
-  Get-Disk | Where-Object { $_.BusType -in 'USB', 'SD' -and -not $_.IsBoot -and -not $_.IsSystem } | ForEach-Object {
+  Get-Disk | Where-Object { $_.BusType -in @('USB', 'SD') -and -not $_.IsBoot -and -not $_.IsSystem } | ForEach-Object {
     [pscustomobject]@{
       number  = $_.Number
       name    = $_.FriendlyName

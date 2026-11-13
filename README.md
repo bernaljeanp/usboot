@@ -5,7 +5,7 @@
 <h1 align="center">USBoot</h1>
 
 <p align="center">
-  Make bootable USB drives — Linux or Windows — from a <b>3 MB</b> app. Every byte verified.
+  Make bootable USB drives — Linux or Windows — from a <b>3 MB</b> app. Every image read back and verified.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@
 ## What it does
 
 - **Flash any ISO or IMG** byte for byte, then **read it all back** and compare. A bad or fake drive can't hide.
-- **Windows mode** — a Windows install ISO doesn't boot when copied raw. USBoot builds a UEFI drive (GPT + FAT32) and splits `install.wim` with DISM so it fits, like Rufus.
+- **Windows mode** — a Windows install ISO doesn't boot when copied raw. USBoot builds a UEFI drive (GPT + FAT32) and splits `install.wim` with DISM so it fits, like Rufus. (Files are copied, not read back: byte-for-byte verification is for raw images.)
 - **Windows 11 options** — install on PCs without TPM 2.0 / Secure Boot, create a local user with no Microsoft account, skip the privacy questions (written as `autounattend.xml`).
 - **SD cards too** — cards in a built-in reader show up next to USB sticks (Windows and Linux), handy for Raspberry Pi OS.
 - **Several drives at once** — the same image onto every stick in parallel, each one verified on its own.
@@ -54,7 +54,7 @@ Same app, same features except Windows mode. It runs as your user and asks for y
 | | USBoot | balenaEtcher | Rufus |
 |---|---|---|---|
 | Download size (Windows) | **3 MB** | ~150 MB | ~1.5 MB |
-| Verifies after writing | ✅ | ✅ | — |
+| Verifies after writing (raw images) | ✅ | ✅ | — |
 | Windows ISOs | ✅ | — | ✅ |
 | Built-in ISO library with checksums | ✅ | — | Windows only |
 | Multi-mirror downloads | ✅ | — | — |

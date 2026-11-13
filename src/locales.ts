@@ -33,6 +33,7 @@ export const pt: Dict = {
   verifying: "Verificando",
   done: "Pronto",
   doneBody: "Gravado e verificado. Já pode desconectar o pendrive.",
+  doneWindows: "Instalador do Windows pronto. Já pode desconectar o pendrive.",
   cancelled: "Cancelado. A unidade ficou incompleta: grave de novo ou formate.",
   close: "Fechar",
   descs: {
@@ -150,6 +151,7 @@ export const fr: Dict = {
   verifying: "Vérification",
   done: "Terminé",
   doneBody: "Écrite et vérifiée. Vous pouvez débrancher la clé.",
+  doneWindows: "Installateur Windows prêt. Vous pouvez débrancher la clé.",
   cancelled: "Annulé. La clé est incomplète : réécrivez-la ou formatez-la.",
   close: "Fermer",
   descs: {
@@ -267,6 +269,7 @@ export const de: Dict = {
   verifying: "Prüfen",
   done: "Fertig",
   doneBody: "Geschrieben und geprüft. Du kannst den Stick abziehen.",
+  doneWindows: "Windows-Installer bereit. Du kannst den Stick abziehen.",
   cancelled: "Abgebrochen. Das Laufwerk ist unvollständig — neu schreiben oder formatieren.",
   close: "Schließen",
   descs: {
@@ -384,6 +387,7 @@ export const it: Dict = {
   verifying: "Verifica",
   done: "Fatto",
   doneBody: "Scritta e verificata. Puoi scollegare la chiavetta.",
+  doneWindows: "Programma di installazione di Windows pronto. Puoi scollegare la chiavetta.",
   cancelled: "Annullato. L'unità è incompleta: riscrivila o formattala.",
   close: "Chiudi",
   descs: {

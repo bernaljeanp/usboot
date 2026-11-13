@@ -153,7 +153,8 @@ export default function App() {
       if (image.windows) {
         const options = { bypassRequirements: win.bypass, localAccount: win.local ? win.user : null, skipPrivacy: win.privacy };
         await invoke("flash_windows", { path: image.path, drive: targets[0], options });
-        setRun({ kind: "done", message: t.doneBody, flashed: true });
+        // Windows mode copies files; nothing is read back, so it doesn't claim "verified".
+        setRun({ kind: "done", message: t.doneWindows, flashed: true });
         return;
       }
       const results = await invoke<(string | null)[]>("flash", { path: image.path, drives: targets });
