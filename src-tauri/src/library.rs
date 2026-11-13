@@ -39,8 +39,9 @@ enum Source {
 }
 
 enum Sums {
+    /// `{v}` is the version found through `index`, for projects that name the file after it.
     File(&'static str),
-    /// The checksum file name changes per build: find it in the directory listing.
+    /// The checksum file name changes per build: find it in the directory listing (the newest, if several).
     Find(&'static str),
 }
 
@@ -48,6 +49,23 @@ const UBUNTU_MIRRORS: &[(&str, &str)] = &[
     ("https://releases.ubuntu.com/", "https://mirrors.kernel.org/ubuntu-releases/"),
     ("https://releases.ubuntu.com/", "https://mirror.us.leaseweb.net/ubuntu-releases/"),
     ("https://releases.ubuntu.com/", "https://ftp.halifax.rwth-aachen.de/ubuntu-releases/"),
+];
+
+const MINT_MIRRORS: &[(&str, &str)] = &[
+    ("https://mirrors.kernel.org/linuxmint/", "https://mirrors.edge.kernel.org/linuxmint/"),
+    ("https://mirrors.kernel.org/linuxmint/", "https://mirror.csclub.uwaterloo.ca/linuxmint/"),
+];
+
+const ZORIN_MIRRORS: &[(&str, &str)] = &[("https://mirrors.edge.kernel.org/", "https://mirrors.kernel.org/")];
+
+const FEDORA_MIRRORS: &[(&str, &str)] = &[
+    ("https://dl.fedoraproject.org/pub/fedora/linux/", "https://mirrors.kernel.org/fedora/"),
+    ("https://dl.fedoraproject.org/pub/fedora/linux/", "https://mirror.csclub.uwaterloo.ca/fedora/linux/"),
+];
+
+const DEBIAN_MIRRORS: &[(&str, &str)] = &[
+    ("https://cdimage.debian.org/debian-cd/", "https://mirrors.kernel.org/debian-cd/"),
+    ("https://cdimage.debian.org/debian-cd/", "https://ftp.acc.umu.se/debian-cd/"),
 ];
 
 const CATALOG: &[Distro] = &[
@@ -104,6 +122,110 @@ const CATALOG: &[Distro] = &[
         mirrors: &[],
     },
     Distro {
+        id: "lubuntu",
+        name: "Lubuntu",
+        desc: "LXQt LTS",
+        source: Source::Sums {
+            index: Some(("https://cdimage.ubuntu.com/lubuntu/releases/", r#"href="(\d\d\.04)/""#)),
+            dir: "https://cdimage.ubuntu.com/lubuntu/releases/{v}/release/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"lubuntu-([\d.]+)-desktop-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "ubuntu-mate",
+        name: "Ubuntu MATE",
+        desc: "MATE LTS",
+        source: Source::Sums {
+            index: Some(("https://cdimage.ubuntu.com/ubuntu-mate/releases/", r#"href="(\d\d\.04)/""#)),
+            dir: "https://cdimage.ubuntu.com/ubuntu-mate/releases/{v}/release/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"ubuntu-mate-([\d.]+)-desktop-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "ubuntu-budgie",
+        name: "Ubuntu Budgie",
+        desc: "Budgie LTS",
+        source: Source::Sums {
+            index: Some(("https://cdimage.ubuntu.com/ubuntu-budgie/releases/", r#"href="(\d\d\.04)/""#)),
+            dir: "https://cdimage.ubuntu.com/ubuntu-budgie/releases/{v}/release/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"ubuntu-budgie-([\d.]+)-desktop-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "ubuntu-cinnamon",
+        name: "Ubuntu Cinnamon",
+        desc: "Cinnamon LTS",
+        source: Source::Sums {
+            index: Some(("https://cdimage.ubuntu.com/ubuntucinnamon/releases/", r#"href="(\d\d\.04)/""#)),
+            dir: "https://cdimage.ubuntu.com/ubuntucinnamon/releases/{v}/release/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"ubuntucinnamon-([\d.]+)-desktop-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "ubuntu-unity",
+        name: "Ubuntu Unity",
+        desc: "Unity LTS",
+        source: Source::Sums {
+            index: Some(("https://cdimage.ubuntu.com/ubuntu-unity/releases/", r#"href="(\d\d\.04)/""#)),
+            dir: "https://cdimage.ubuntu.com/ubuntu-unity/releases/{v}/release/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"ubuntu-unity-([\d.]+)-desktop-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "ubuntu-studio",
+        name: "Ubuntu Studio",
+        desc: "Creators LTS",
+        source: Source::Sums {
+            index: Some(("https://cdimage.ubuntu.com/ubuntustudio/releases/", r#"href="(\d\d\.04)/""#)),
+            dir: "https://cdimage.ubuntu.com/ubuntustudio/releases/{v}/release/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"ubuntustudio-([\d.]+)-desktop-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "edubuntu",
+        name: "Edubuntu",
+        desc: "Education LTS",
+        source: Source::Sums {
+            index: Some(("https://cdimage.ubuntu.com/edubuntu/releases/", r#"href="(\d\d\.04)/""#)),
+            dir: "https://cdimage.ubuntu.com/edubuntu/releases/{v}/release/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"edubuntu-([\d.]+)-desktop-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "ubuntu-kylin",
+        name: "Ubuntu Kylin",
+        desc: "UKUI LTS",
+        source: Source::Sums {
+            index: Some(("https://cdimage.ubuntu.com/ubuntukylin/releases/", r#"href="(\d\d\.04)/""#)),
+            dir: "https://cdimage.ubuntu.com/ubuntukylin/releases/{v}/release/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"ubuntukylin-([\d.]+)-desktop-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
         id: "mint",
         name: "Linux Mint",
         desc: "Cinnamon",
@@ -114,10 +236,46 @@ const CATALOG: &[Distro] = &[
             iso: r"linuxmint-([\d.]+)-cinnamon-64bit\.iso",
             fetch: None,
         },
-        mirrors: &[
-            ("https://mirrors.kernel.org/linuxmint/", "https://mirrors.edge.kernel.org/linuxmint/"),
-            ("https://mirrors.kernel.org/linuxmint/", "https://mirror.csclub.uwaterloo.ca/linuxmint/"),
-        ],
+        mirrors: MINT_MIRRORS,
+    },
+    Distro {
+        id: "mint-xfce",
+        name: "Linux Mint",
+        desc: "Xfce",
+        source: Source::Sums {
+            index: Some(("https://mirrors.kernel.org/linuxmint/stable/", r#"href="(\d+\.\d+)/""#)),
+            dir: "https://mirrors.kernel.org/linuxmint/stable/{v}/",
+            sums: Sums::File("sha256sum.txt"),
+            iso: r"linuxmint-([\d.]+)-xfce-64bit\.iso",
+            fetch: None,
+        },
+        mirrors: MINT_MIRRORS,
+    },
+    Distro {
+        id: "mint-mate",
+        name: "Linux Mint",
+        desc: "MATE",
+        source: Source::Sums {
+            index: Some(("https://mirrors.kernel.org/linuxmint/stable/", r#"href="(\d+\.\d+)/""#)),
+            dir: "https://mirrors.kernel.org/linuxmint/stable/{v}/",
+            sums: Sums::File("sha256sum.txt"),
+            iso: r"linuxmint-([\d.]+)-mate-64bit\.iso",
+            fetch: None,
+        },
+        mirrors: MINT_MIRRORS,
+    },
+    Distro {
+        id: "lmde",
+        name: "LMDE",
+        desc: "Mint on Debian",
+        source: Source::Sums {
+            index: None,
+            dir: "https://mirrors.kernel.org/linuxmint/debian/",
+            sums: Sums::File("sha256sum.txt"),
+            iso: r"lmde-(\d+)-cinnamon-64bit\.iso",
+            fetch: None,
+        },
+        mirrors: MINT_MIRRORS,
     },
     Distro {
         id: "zorin",
@@ -131,13 +289,33 @@ const CATALOG: &[Distro] = &[
             iso: r"Zorin-OS-([\d.]+)-Core-64-bit(?:-r(\d+))?\.iso",
             fetch: None,
         },
-        mirrors: &[("https://mirrors.edge.kernel.org/", "https://mirrors.kernel.org/")],
+        mirrors: ZORIN_MIRRORS,
+    },
+    Distro {
+        id: "zorin-lite",
+        name: "Zorin OS",
+        desc: "Lite",
+        source: Source::Sums {
+            index: Some(("https://mirrors.edge.kernel.org/zorinos-isos/", r#"href="(\d+)/""#)),
+            dir: "https://mirrors.edge.kernel.org/zorinos-isos/{v}/",
+            sums: Sums::File("SHA256SUMS.txt"),
+            iso: r"Zorin-OS-([\d.]+)-Lite-64-bit(?:-r(\d+))?\.iso",
+            fetch: None,
+        },
+        mirrors: ZORIN_MIRRORS,
     },
     Distro {
         id: "popos",
         name: "Pop!_OS",
         desc: "Intel/AMD",
         source: Source::Api(popos),
+        mirrors: &[],
+    },
+    Distro {
+        id: "popos-nvidia",
+        name: "Pop!_OS",
+        desc: "Nvidia",
+        source: Source::Api(popos_nvidia),
         mirrors: &[],
     },
     Distro {
@@ -151,10 +329,111 @@ const CATALOG: &[Distro] = &[
             iso: r"Fedora-Workstation-Live-([\d.-]+)\.x86_64\.iso",
             fetch: None,
         },
-        mirrors: &[
-            ("https://dl.fedoraproject.org/pub/fedora/linux/", "https://mirrors.kernel.org/fedora/"),
-            ("https://dl.fedoraproject.org/pub/fedora/linux/", "https://mirror.csclub.uwaterloo.ca/fedora/linux/"),
-        ],
+        mirrors: FEDORA_MIRRORS,
+    },
+    Distro {
+        id: "fedora-kde",
+        name: "Fedora KDE",
+        desc: "Plasma Desktop",
+        source: Source::Sums {
+            index: Some(("https://dl.fedoraproject.org/pub/fedora/linux/releases/", r#"href="(\d+)/""#)),
+            dir: "https://dl.fedoraproject.org/pub/fedora/linux/releases/{v}/KDE/x86_64/iso/",
+            sums: Sums::Find(r"Fedora-KDE-[\d.-]+-x86_64-CHECKSUM"),
+            iso: r"Fedora-KDE-Desktop-Live-([\d.-]+)\.x86_64\.iso",
+            fetch: None,
+        },
+        mirrors: FEDORA_MIRRORS,
+    },
+    Distro {
+        id: "fedora-xfce",
+        name: "Fedora Xfce",
+        desc: "Spin",
+        source: Source::Sums {
+            index: Some(("https://dl.fedoraproject.org/pub/fedora/linux/releases/", r#"href="(\d+)/""#)),
+            dir: "https://dl.fedoraproject.org/pub/fedora/linux/releases/{v}/Spins/x86_64/iso/",
+            sums: Sums::Find(r"Fedora-Spins-[\d.-]+-x86_64-CHECKSUM"),
+            iso: r"Fedora-Xfce-Live-([\d.-]+)\.x86_64\.iso",
+            fetch: None,
+        },
+        mirrors: FEDORA_MIRRORS,
+    },
+    Distro {
+        id: "fedora-cinnamon",
+        name: "Fedora Cinnamon",
+        desc: "Spin",
+        source: Source::Sums {
+            index: Some(("https://dl.fedoraproject.org/pub/fedora/linux/releases/", r#"href="(\d+)/""#)),
+            dir: "https://dl.fedoraproject.org/pub/fedora/linux/releases/{v}/Spins/x86_64/iso/",
+            sums: Sums::Find(r"Fedora-Spins-[\d.-]+-x86_64-CHECKSUM"),
+            iso: r"Fedora-Cinnamon-Live-([\d.-]+)\.x86_64\.iso",
+            fetch: None,
+        },
+        mirrors: FEDORA_MIRRORS,
+    },
+    Distro {
+        id: "fedora-cosmic",
+        name: "Fedora COSMIC",
+        desc: "Spin",
+        source: Source::Sums {
+            index: Some(("https://dl.fedoraproject.org/pub/fedora/linux/releases/", r#"href="(\d+)/""#)),
+            dir: "https://dl.fedoraproject.org/pub/fedora/linux/releases/{v}/Spins/x86_64/iso/",
+            sums: Sums::Find(r"Fedora-Spins-[\d.-]+-x86_64-CHECKSUM"),
+            iso: r"Fedora-COSMIC-Live-([\d.-]+)\.x86_64\.iso",
+            fetch: None,
+        },
+        mirrors: FEDORA_MIRRORS,
+    },
+    Distro {
+        id: "fedora-silverblue",
+        name: "Fedora Silverblue",
+        desc: "Atomic GNOME",
+        source: Source::Sums {
+            index: Some(("https://dl.fedoraproject.org/pub/fedora/linux/releases/", r#"href="(\d+)/""#)),
+            dir: "https://dl.fedoraproject.org/pub/fedora/linux/releases/{v}/Silverblue/x86_64/iso/",
+            sums: Sums::Find(r"Fedora-Silverblue-[\d.-]+-x86_64-CHECKSUM"),
+            iso: r"Fedora-Silverblue-Installer-([\d.-]+)\.x86_64\.iso",
+            fetch: None,
+        },
+        mirrors: FEDORA_MIRRORS,
+    },
+    Distro {
+        id: "fedora-kinoite",
+        name: "Fedora Kinoite",
+        desc: "Atomic KDE",
+        source: Source::Sums {
+            index: Some(("https://dl.fedoraproject.org/pub/fedora/linux/releases/", r#"href="(\d+)/""#)),
+            dir: "https://dl.fedoraproject.org/pub/fedora/linux/releases/{v}/Kinoite/x86_64/iso/",
+            sums: Sums::Find(r"Fedora-Kinoite-[\d.-]+-x86_64-CHECKSUM"),
+            iso: r"Fedora-Kinoite-Installer-([\d.-]+)\.x86_64\.iso",
+            fetch: None,
+        },
+        mirrors: FEDORA_MIRRORS,
+    },
+    Distro {
+        id: "fedora-server",
+        name: "Fedora Server",
+        desc: "DVD",
+        source: Source::Sums {
+            index: Some(("https://dl.fedoraproject.org/pub/fedora/linux/releases/", r#"href="(\d+)/""#)),
+            dir: "https://dl.fedoraproject.org/pub/fedora/linux/releases/{v}/Server/x86_64/iso/",
+            sums: Sums::Find(r"Fedora-Server-[\d.-]+-x86_64-CHECKSUM"),
+            iso: r"Fedora-Server-dvd-x86_64-([\d.-]+)\.iso",
+            fetch: None,
+        },
+        mirrors: FEDORA_MIRRORS,
+    },
+    Distro {
+        id: "nobara",
+        name: "Nobara",
+        desc: "Gaming",
+        source: Source::Sums {
+            index: Some(("https://nobaraproject.org/download.html", r"Nobara-(\d+-Official-\d{4}-\d\d-\d\d)\.iso")),
+            dir: "https://nobara-images.nobaraproject.org/",
+            sums: Sums::File("Nobara-{v}.iso.sha256sum"),
+            iso: r"Nobara-(\d+)-Official-[\d-]+\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
     },
     Distro {
         id: "cachyos",
@@ -165,6 +444,19 @@ const CATALOG: &[Distro] = &[
             dir: "https://mirror.cachyos.org/ISO/desktop/{v}/",
             sums: Sums::Find(r"cachyos-desktop-linux-\d+\.iso\.sha256"),
             iso: r"cachyos-desktop-linux-(\d+)\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "cachyos-handheld",
+        name: "CachyOS",
+        desc: "Handheld",
+        source: Source::Sums {
+            index: Some(("https://mirror.cachyos.org/ISO/handheld/", r#"href="(\d{6})/""#)),
+            dir: "https://mirror.cachyos.org/ISO/handheld/{v}/",
+            sums: Sums::Find(r"cachyos-handheld-linux-\d+\.iso\.sha256"),
+            iso: r"cachyos-handheld-linux-(\d+)\.iso",
             fetch: None,
         },
         mirrors: &[],
@@ -183,6 +475,58 @@ const CATALOG: &[Distro] = &[
         mirrors: &[],
     },
     Distro {
+        id: "bazzite-nvidia",
+        name: "Bazzite",
+        desc: "Nvidia",
+        source: Source::Sums {
+            index: None,
+            dir: "https://download.bazzite.gg/",
+            sums: Sums::File("bazzite-nvidia-stable-amd64.iso-CHECKSUM"),
+            iso: r"bazzite-nvidia-stable-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "bazzite-gnome",
+        name: "Bazzite",
+        desc: "GNOME",
+        source: Source::Sums {
+            index: None,
+            dir: "https://download.bazzite.gg/",
+            sums: Sums::File("bazzite-gnome-stable-amd64.iso-CHECKSUM"),
+            iso: r"bazzite-gnome-stable-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "bazzite-deck",
+        name: "Bazzite",
+        desc: "Steam Deck · handhelds",
+        source: Source::Sums {
+            index: None,
+            dir: "https://download.bazzite.gg/",
+            sums: Sums::File("bazzite-deck-stable-amd64.iso-CHECKSUM"),
+            iso: r"bazzite-deck-stable-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "bluefin",
+        name: "Bluefin",
+        desc: "Atomic GNOME",
+        source: Source::Sums {
+            index: None,
+            dir: "https://download.projectbluefin.io/",
+            sums: Sums::File("bluefin-stable-x86_64.iso-CHECKSUM"),
+            iso: r"bluefin-stable-x86_64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
         id: "debian",
         name: "Debian",
         desc: "Live GNOME",
@@ -193,10 +537,59 @@ const CATALOG: &[Distro] = &[
             iso: r"debian-live-([\d.]+)-amd64-gnome\.iso",
             fetch: None,
         },
-        mirrors: &[
-            ("https://cdimage.debian.org/debian-cd/", "https://mirrors.kernel.org/debian-cd/"),
-            ("https://cdimage.debian.org/debian-cd/", "https://ftp.acc.umu.se/debian-cd/"),
-        ],
+        mirrors: DEBIAN_MIRRORS,
+    },
+    Distro {
+        id: "debian-kde",
+        name: "Debian",
+        desc: "Live KDE",
+        source: Source::Sums {
+            index: None,
+            dir: "https://cdimage.debian.org/debian-cd/current-live/amd64/iso-hybrid/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"debian-live-([\d.]+)-amd64-kde\.iso",
+            fetch: None,
+        },
+        mirrors: DEBIAN_MIRRORS,
+    },
+    Distro {
+        id: "debian-xfce",
+        name: "Debian",
+        desc: "Live Xfce",
+        source: Source::Sums {
+            index: None,
+            dir: "https://cdimage.debian.org/debian-cd/current-live/amd64/iso-hybrid/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"debian-live-([\d.]+)-amd64-xfce\.iso",
+            fetch: None,
+        },
+        mirrors: DEBIAN_MIRRORS,
+    },
+    Distro {
+        id: "debian-netinst",
+        name: "Debian",
+        desc: "Netinst",
+        source: Source::Sums {
+            index: None,
+            dir: "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"debian-([\d.]+)-amd64-netinst\.iso",
+            fetch: None,
+        },
+        mirrors: DEBIAN_MIRRORS,
+    },
+    Distro {
+        id: "devuan",
+        name: "Devuan",
+        desc: "Desktop live",
+        source: Source::Sums {
+            index: None,
+            dir: "https://files.devuan.org/devuan_excalibur/desktop-live/",
+            sums: Sums::Find(r"devuan_excalibur_[\d.]+_amd64_desktop-live\.iso\.sha256"),
+            iso: r"devuan_excalibur_([\d.]+)_amd64_desktop-live\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
     },
     Distro {
         id: "arch",
@@ -229,6 +622,71 @@ const CATALOG: &[Distro] = &[
         mirrors: &[],
     },
     Distro {
+        id: "nixos",
+        name: "NixOS",
+        desc: "Graphical",
+        source: Source::Sums {
+            index: Some(("https://nixos.org/download/", r"nixos-(\d\d\.\d\d)/latest-nixos-graphical-x86_64")),
+            dir: "https://channels.nixos.org/nixos-{v}/",
+            sums: Sums::File("latest-nixos-graphical-x86_64-linux.iso.sha256"),
+            iso: r"nixos-graphical-([\d.]+)\.[0-9a-f]+-x86_64-linux\.iso",
+            fetch: Some("latest-nixos-graphical-x86_64-linux.iso"),
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "void",
+        name: "Void Linux",
+        desc: "Xfce",
+        source: Source::Sums {
+            index: None,
+            dir: "https://repo-default.voidlinux.org/live/current/",
+            sums: Sums::File("sha256sum.txt"),
+            iso: r"void-live-x86_64-(\d+)-xfce\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "gentoo",
+        name: "Gentoo",
+        desc: "Minimal install",
+        source: Source::Sums {
+            index: None,
+            dir: "https://distfiles.gentoo.org/releases/amd64/autobuilds/current-install-amd64-minimal/",
+            sums: Sums::Find(r"install-amd64-minimal-\w+\.iso\.sha256"),
+            iso: r"install-amd64-minimal-(\w+)\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "solus",
+        name: "Solus",
+        desc: "Budgie",
+        source: Source::Sums {
+            index: Some(("https://downloads.getsol.us/isos/", r#"href="\./(\d{4}-\d\d-\d\d)/""#)),
+            dir: "https://downloads.getsol.us/isos/{v}/",
+            sums: Sums::File("Solus-Release-{v}.sha256sums"),
+            iso: r"Solus-Budgie-Release-([\d-]+)\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "alpine",
+        name: "Alpine Linux",
+        desc: "Standard",
+        source: Source::Sums {
+            index: None,
+            dir: "https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/",
+            sums: Sums::Find(r"alpine-standard-[\d.]+-x86_64\.iso\.sha256"),
+            iso: r"alpine-standard-([\d.]+)-x86_64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
         id: "rocky",
         name: "Rocky Linux",
         desc: "DVD",
@@ -242,6 +700,19 @@ const CATALOG: &[Distro] = &[
         mirrors: &[],
     },
     Distro {
+        id: "rocky-minimal",
+        name: "Rocky Linux",
+        desc: "Minimal",
+        source: Source::Sums {
+            index: Some(("https://download.rockylinux.org/pub/rocky/", r#"href="(\d+)/""#)),
+            dir: "https://download.rockylinux.org/pub/rocky/{v}/isos/x86_64/",
+            sums: Sums::File("CHECKSUM"),
+            iso: r"Rocky-([\d.]+)-x86_64-minimal\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
         id: "alma",
         name: "AlmaLinux",
         desc: "DVD",
@@ -250,6 +721,32 @@ const CATALOG: &[Distro] = &[
             dir: "https://repo.almalinux.org/almalinux/{v}/isos/x86_64/",
             sums: Sums::File("CHECKSUM"),
             iso: r"AlmaLinux-([\d.]+)-x86_64-dvd\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "alma-minimal",
+        name: "AlmaLinux",
+        desc: "Minimal",
+        source: Source::Sums {
+            index: Some(("https://repo.almalinux.org/almalinux/", r#"href="(\d+)/""#)),
+            dir: "https://repo.almalinux.org/almalinux/{v}/isos/x86_64/",
+            sums: Sums::File("CHECKSUM"),
+            iso: r"AlmaLinux-([\d.]+)-x86_64-minimal\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "centos",
+        name: "CentOS Stream",
+        desc: "DVD",
+        source: Source::Sums {
+            index: Some(("https://mirror.stream.centos.org/", r#"href="(\d+)-stream/""#)),
+            dir: "https://mirror.stream.centos.org/{v}-stream/BaseOS/x86_64/iso/",
+            sums: Sums::File("SHA256SUM"),
+            iso: r"CentOS-Stream-([\d.-]+)-x86_64-dvd1\.iso",
             fetch: None,
         },
         mirrors: &[],
@@ -292,6 +789,19 @@ const CATALOG: &[Distro] = &[
         mirrors: &[],
     },
     Distro {
+        id: "qubes",
+        name: "Qubes OS",
+        desc: "Security",
+        source: Source::Sums {
+            index: None,
+            dir: "https://mirrors.edge.kernel.org/qubes/iso/",
+            sums: Sums::Find(r"Qubes-R[\d.]+-x86_64\.iso\.DIGESTS"),
+            iso: r"Qubes-R([\d.]+)-x86_64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
         id: "proxmox",
         name: "Proxmox VE",
         desc: "Hypervisor",
@@ -300,6 +810,84 @@ const CATALOG: &[Distro] = &[
             dir: "https://enterprise.proxmox.com/iso/",
             sums: Sums::File("SHA256SUMS"),
             iso: r"proxmox-ve_([\d.]+-\d+)\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "proxmox-backup",
+        name: "Proxmox Backup",
+        desc: "Server",
+        source: Source::Sums {
+            index: None,
+            dir: "https://enterprise.proxmox.com/iso/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"proxmox-backup-server_([\d.]+-\d+)\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "proxmox-mail",
+        name: "Proxmox Mail",
+        desc: "Gateway",
+        source: Source::Sums {
+            index: None,
+            dir: "https://enterprise.proxmox.com/iso/",
+            sums: Sums::File("SHA256SUMS"),
+            iso: r"proxmox-mail-gateway_([\d.]+-\d+)\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "systemrescue",
+        name: "SystemRescue",
+        desc: "Rescue toolkit",
+        source: Source::Sums {
+            index: Some(("https://www.system-rescue.org/Download/", r"releases/([\d.]+)/systemrescue")),
+            dir: "https://fastly-cdn.system-rescue.org/releases/{v}/",
+            sums: Sums::File("systemrescue-{v}-amd64.iso.sha256"),
+            iso: r"systemrescue-([\d.]+)-amd64\.iso",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "raspios",
+        name: "Raspberry Pi OS",
+        desc: "Desktop · 64-bit",
+        source: Source::Sums {
+            index: Some(("https://downloads.raspberrypi.com/raspios_arm64/images/", r#"href="raspios_arm64-(\d{4}-\d\d-\d\d)/""#)),
+            dir: "https://downloads.raspberrypi.com/raspios_arm64/images/raspios_arm64-{v}/",
+            sums: Sums::Find(r"[\w-]+-arm64\.img\.xz\.sha256"),
+            iso: r"(\d{4}-\d\d-\d\d)-raspios-\w+-arm64\.img\.xz",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "raspios-lite",
+        name: "Raspberry Pi OS",
+        desc: "Lite · 64-bit",
+        source: Source::Sums {
+            index: Some(("https://downloads.raspberrypi.com/raspios_lite_arm64/images/", r#"href="raspios_lite_arm64-(\d{4}-\d\d-\d\d)/""#)),
+            dir: "https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-{v}/",
+            sums: Sums::Find(r"[\w-]+-arm64-lite\.img\.xz\.sha256"),
+            iso: r"(\d{4}-\d\d-\d\d)-raspios-\w+-arm64-lite\.img\.xz",
+            fetch: None,
+        },
+        mirrors: &[],
+    },
+    Distro {
+        id: "openbsd",
+        name: "OpenBSD",
+        desc: "USB installer",
+        source: Source::Sums {
+            index: Some(("https://cdn.openbsd.org/pub/OpenBSD/", r#"href="(\d+\.\d+)/""#)),
+            dir: "https://cdn.openbsd.org/pub/OpenBSD/{v}/amd64/",
+            sums: Sums::File("SHA256"),
+            iso: r"install(\d+)\.img",
             fetch: None,
         },
         mirrors: &[],
@@ -381,7 +969,8 @@ fn parse_sums(text: &str) -> Vec<(String, String)> {
         .filter_map(|l| {
             let l = l.trim();
             gnu.captures(l)
-                .map(|c| (c[2].to_string(), c[1].to_lowercase()))
+                // some projects write "./file.iso"
+                .map(|c| (c[2].trim_start_matches("./").to_string(), c[1].to_lowercase()))
                 .or_else(|| bsd.captures(l).map(|c| (c[1].to_string(), c[2].to_lowercase())))
         })
         .collect()
@@ -410,7 +999,15 @@ fn json(url: &str) -> Result<serde_json::Value, String> {
 }
 
 fn popos() -> Result<Release, String> {
-    let j = json("https://api.pop-os.org/builds/24.04/intel")?;
+    popos_build("intel")
+}
+
+fn popos_nvidia() -> Result<Release, String> {
+    popos_build("nvidia")
+}
+
+fn popos_build(channel: &str) -> Result<Release, String> {
+    let j = json(&format!("https://api.pop-os.org/builds/24.04/{channel}"))?;
     let url = j["url"].as_str().ok_or("no url")?.to_string();
     Ok(Release {
         version: format!("{} build {}", j["version"].as_str().unwrap_or("?"), j["build"].as_str().unwrap_or("?")),
@@ -445,18 +1042,22 @@ fn resolve(d: &Distro) -> Result<Release, String> {
         Source::Api(f) => return f(),
         Source::Page(_) => return Err("page".into()),
     };
-    let dir = match index {
+    let v = match index {
         Some((url, pattern)) => {
             let re = Regex::new(pattern).unwrap();
             let page = get_text(url)?;
-            let v = re.captures_iter(&page).map(|c| c[1].to_string()).max_by_key(|v| version_key(v)).ok_or("No releases listed")?;
-            dir.replace("{v}", &v)
+            re.captures_iter(&page).map(|c| c[1].to_string()).max_by_key(|v| version_key(v)).ok_or("No releases listed")?
         }
-        None => dir.to_string(),
+        None => String::new(),
     };
+    let dir = dir.replace("{v}", &v);
     let sums_name = match sums {
-        Sums::File(name) => name.to_string(),
-        Sums::Find(pattern) => Regex::new(pattern).unwrap().find(&get_text(&dir)?).ok_or("No checksum file")?.as_str().to_string(),
+        Sums::File(name) => name.replace("{v}", &v),
+        Sums::Find(pattern) => {
+            let listing = get_text(&dir)?;
+            let re = Regex::new(pattern).unwrap();
+            re.find_iter(&listing).map(|m| m.as_str().to_string()).max_by_key(|n| version_key(n)).ok_or("No checksum file")?
+        }
     };
     let (version, file, sha256) = newest(&parse_sums(&get_text(&format!("{dir}{sums_name}"))?), &full(iso)).ok_or("No ISO in the checksum file")?;
     let url = format!("{dir}{}", fetch.unwrap_or(&file));
@@ -755,6 +1356,23 @@ mod tests {
     }
 
     #[test]
+    fn catalog_ids_are_unique_and_patterns_compile() {
+        let mut seen = HashSet::new();
+        for d in CATALOG {
+            assert!(seen.insert(d.id), "duplicate id {}", d.id);
+            if let Source::Sums { index, sums, iso, .. } = &d.source {
+                full(iso);
+                if let Some((_, pattern)) = index {
+                    Regex::new(pattern).unwrap();
+                }
+                if let Sums::Find(pattern) = sums {
+                    Regex::new(pattern).unwrap();
+                }
+            }
+        }
+    }
+
+    #[test]
     fn picks_newest_iso_from_both_checksum_formats() {
         let ubuntu = "487f87faaf547ea30e0aba4d5b53346292571256b25333a978db1692bcee9dd2 *ubuntu-26.04-desktop-amd64.iso\n\
                       dec49008a71f6098d0bcfc822021f4d042d5f2db279e4d75bdd981304f1ca5d9 *ubuntu-26.04-live-server-amd64.iso\n\
@@ -800,6 +1418,11 @@ mod tests {
                       cc85c85061aa5539afc865895c9a2354a709ca53e246264a71dc93eeb2eedaac17b9d548f25235655fefbc7c7e080398af061c041f8ba91d4ae43ddd163e931b  Parrot-security-7.4_amd64.iso";
         let (_, _, hash) = newest(&parse_sums(parrot), &iso_of("parrot")).unwrap();
         assert!(hash.starts_with("ca2412"));
+
+        // Nobara writes "./file.iso".
+        let nobara = "0c3b9a1f5d2e4f60718293a4b5c6d7e8f90123456789abcdef0123456789abcd  ./Nobara-44-Official-2026-10-13.iso";
+        let (v, file, _) = newest(&parse_sums(nobara), &iso_of("nobara")).unwrap();
+        assert_eq!((v.as_str(), file.as_str()), ("44", "Nobara-44-Official-2026-10-13.iso"));
 
         assert!(version_key("26.10") > version_key("26.04.1"));
         assert!(version_key("9") < version_key("44"));

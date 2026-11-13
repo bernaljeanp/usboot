@@ -28,10 +28,11 @@
 - **Flash any ISO or IMG** byte for byte, then **read it all back** and compare. A bad or fake drive can't hide.
 - **Windows mode** — a Windows install ISO doesn't boot when copied raw. USBoot builds a UEFI drive (GPT + FAT32) and splits `install.wim` with DISM so it fits, like Rufus.
 - **Windows 11 options** — install on PCs without TPM 2.0 / Secure Boot, create a local user with no Microsoft account, skip the privacy questions (written as `autounattend.xml`).
+- **SD cards too** — cards in a built-in reader show up next to USB sticks (Windows and Linux), handy for Raspberry Pi OS.
 - **Several drives at once** — the same image onto every stick in parallel, each one verified on its own.
 - **Compressed images** — `.img.xz`, `.gz` and `.zst` (Raspberry Pi OS, SteamOS…) are unpacked once, then written and verified.
-- **Updates itself** from signed GitHub releases.
-- **ISO library** — 20 sources, always the newest official release, read live from each project's own checksum file: Ubuntu, Kubuntu, Xubuntu, Ubuntu Server, Linux Mint, Zorin OS, Pop!_OS, Fedora, CachyOS, Bazzite, Debian, Arch, openSUSE, Rocky, Alma, Kali, Parrot OS, Tails, Proxmox VE (and a link to Windows 11).
+- **Updates itself** from signed GitHub releases, on Windows, Linux (AppImage and .deb) and macOS.
+- **ISO library** — 64 systems with a search box, always the newest official release, read live from each project's own checksum file: Ubuntu and its flavours (Kubuntu, Xubuntu, Lubuntu, MATE, Budgie, Cinnamon, Unity, Studio, Edubuntu, Kylin, Server), Linux Mint (Cinnamon, Xfce, MATE, LMDE), Zorin OS, Pop!_OS, Fedora (Workstation, KDE, Xfce, Cinnamon, COSMIC, Silverblue, Kinoite, Server), Nobara, CachyOS, Bazzite, Bluefin, Debian, Devuan, Arch, openSUSE, NixOS, Void, Gentoo, Solus, Alpine, Rocky, Alma, CentOS Stream, Kali, Parrot OS, Tails, Qubes OS, Proxmox (VE, Backup, Mail), SystemRescue, Raspberry Pi OS, OpenBSD (and a link to Windows 11).
 - **Fast downloads** — measures the official mirrors, drops the slow ones and pulls 8 MB ranges from several at once. Then checks the **SHA-256**; a download that doesn't match is deleted, never kept.
 - **Live sector map** (WebGL) — the drive as a honeycomb of sectors that ignite as they're written and cool down as they're verified.
 - **Restore drive** — one click back to a normal drive (exFAT / NTFS / FAT32, full capacity). Fixes the "my 32 GB stick shows 4 MB" after flashing Linux.
@@ -42,7 +43,7 @@
 
 ## Safety
 
-USBoot only lists **USB** disks, never the disk Windows runs from. Drives bigger than a typical stick are flagged as *external disk* with an extra warning. Right before erasing, it checks the drive is still exactly the one you picked (number, serial and size) — unplug and plug in something else, and it stops.
+USBoot only lists **USB** disks and **SD cards**, never the disk your system runs from. Drives bigger than a typical stick are flagged as *external disk* with an extra warning. Right before erasing, it checks the drive is still exactly the one you picked (number, serial and size) — unplug and plug in something else, and it stops.
 
 ## Linux & macOS (beta)
 
@@ -78,6 +79,16 @@ cargo test -- --ignored   # online checks: every distro resolves, mirror downloa
 ```
 
 `npm run dev` and open `/preview.html` to run the whole UI in a browser with the Rust side simulated.
+
+### Releasing
+
+Bump the version in `package.json`, `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json`, then push an annotated tag — its message becomes the release notes:
+
+```bash
+git tag -a v0.2.2 -m "What changed" && git push origin v0.2.2
+```
+
+GitHub Actions builds and signs the Windows, Linux and macOS bundles, writes the `latest.json` the in-app updater reads and attaches everything to a **draft** release. Check it, then `gh release edit v0.2.2 --draft=false`. It needs two repository secrets: `TAURI_SIGNING_PRIVATE_KEY` (the contents of the updater key) and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 
 Built with [Tauri 2](https://tauri.app) (Rust) and React. Sibling of [Purge](https://github.com/bernaljeanp/purge).
 

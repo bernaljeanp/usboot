@@ -34,11 +34,11 @@ pub fn powershell(script: &str) -> Result<String, String> {
     run(Command::new("powershell").args(["-NoProfile", "-NonInteractive", "-Command", &script]))
 }
 
-// USB bus only, never the disk Windows booted from or lives on.
+// USB sticks and SD cards only, never the disk Windows booted from or lives on.
 #[cfg(windows)]
 const LIST: &str = r#"
 ConvertTo-Json -Compress -InputObject @(
-  Get-Disk | Where-Object { $_.BusType -eq 'USB' -and -not $_.IsBoot -and -not $_.IsSystem } | ForEach-Object {
+  Get-Disk | Where-Object { $_.BusType -in 'USB', 'SD' -and -not $_.IsBoot -and -not $_.IsSystem } | ForEach-Object {
     [pscustomobject]@{
       number  = $_.Number
       name    = $_.FriendlyName
@@ -55,15 +55,18 @@ pub fn list() -> Result<Vec<Drive>, String> {
     serde_json::from_str(&powershell(LIST)?).map_err(|e| e.to_string())
 }
 
-/// USB whole disks from lsblk, skipping any disk that holds /, /boot or swap.
+/// USB whole disks and SD cards from lsblk, skipping any disk that holds /, /boot or swap.
 #[cfg(target_os = "linux")]
 pub fn list() -> Result<Vec<Drive>, String> {
     let out = run(Command::new("lsblk").args(["-J", "-b", "-o", "NAME,PATH,SIZE,TRAN,MODEL,SERIAL,TYPE,MOUNTPOINT"]))?;
-    Ok(parse_lsblk(&out))
+    // A built-in card reader isn't on the USB bus. The kernel says what's in the slot: "SD" is a
+    // card, "MMC" is eMMC storage soldered to the board, which is never offered.
+    let is_sd = |name: &str| std::fs::read_to_string(format!("/sys/block/{name}/device/type")).is_ok_and(|t| t.trim() == "SD");
+    Ok(parse_lsblk(&out, is_sd))
 }
 
 #[cfg(any(target_os = "linux", test))]
-pub fn parse_lsblk(json: &str) -> Vec<Drive> {
+pub fn parse_lsblk(json: &str, is_sd: impl Fn(&str) -> bool) -> Vec<Drive> {
     let v: serde_json::Value = serde_json::from_str(json).unwrap_or_default();
     let system = |d: &serde_json::Value| {
         let mut stack = vec![d];
@@ -78,14 +81,19 @@ pub fn parse_lsblk(json: &str) -> Vec<Drive> {
         false
     };
     let text = |d: &serde_json::Value, k: &str| d[k].as_str().unwrap_or("").trim().to_string();
+    // mmcblk0, never its mmcblk0boot0 / mmcblk0rpmb siblings.
+    let sd_card = |d: &serde_json::Value| {
+        let name = d["name"].as_str().unwrap_or("");
+        name.strip_prefix("mmcblk").is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit())) && is_sd(name)
+    };
     v["blockdevices"]
         .as_array()
         .into_iter()
         .flatten()
-        .filter(|d| d["type"] == "disk" && d["tran"] == "usb" && !system(d))
+        .filter(|d| d["type"] == "disk" && (d["tran"] == "usb" || sd_card(d)) && !system(d))
         .map(|d| Drive {
             number: stable_id(&text(d, "name")),
-            name: Some(text(d, "model")).filter(|m| !m.is_empty()).unwrap_or_else(|| text(d, "name")),
+            name: Some(text(d, "model")).filter(|m| !m.is_empty()).unwrap_or_else(|| if sd_card(d) { "SD card".into() } else { text(d, "name") }),
             size: d["size"].as_u64().or_else(|| d["size"].as_str().and_then(|s| s.parse().ok())).unwrap_or(0),
             serial: text(d, "serial"),
             letters: vec![],
@@ -140,10 +148,15 @@ mod tests {
           {"name":"sdb","path":"/dev/sdb","size":"32017047552","tran":"usb","model":"SanDisk Ultra ","serial":"4C53","type":"disk","mountpoint":null,
            "children":[{"name":"sdb1","mountpoint":"/media/me/USB","type":"part"}]},
           {"name":"sdc","path":"/dev/sdc","size":64000000000,"tran":"usb","model":"Live","serial":"X","type":"disk","mountpoint":null,
-           "children":[{"name":"sdc1","mountpoint":"/boot/efi","type":"part"}]}
+           "children":[{"name":"sdc1","mountpoint":"/boot/efi","type":"part"}]},
+          {"name":"mmcblk0","path":"/dev/mmcblk0","size":31914983424,"tran":null,"model":null,"serial":"0x1234","type":"disk","mountpoint":null},
+          {"name":"mmcblk1","path":"/dev/mmcblk1","size":62537072640,"tran":null,"model":null,"serial":"0x5678","type":"disk","mountpoint":null},
+          {"name":"mmcblk1boot0","path":"/dev/mmcblk1boot0","size":4194304,"tran":null,"model":null,"serial":null,"type":"disk","mountpoint":null}
         ]}"#;
-        let drives = super::parse_lsblk(json);
-        assert_eq!(drives.len(), 1, "system disk and a USB holding /boot are both skipped");
+        // mmcblk0 is a card in the reader; mmcblk1 is eMMC soldered to the board.
+        let drives = super::parse_lsblk(json, |name| name == "mmcblk0");
+        assert_eq!(drives.len(), 2, "system disk, a USB holding /boot and the eMMC are all skipped");
         assert_eq!((drives[0].name.as_str(), drives[0].size, drives[0].device.as_str()), ("SanDisk Ultra", 32017047552, "/dev/sdb"));
+        assert_eq!((drives[1].name.as_str(), drives[1].device.as_str()), ("SD card", "/dev/mmcblk0"));
     }
 }

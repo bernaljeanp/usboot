@@ -3,10 +3,11 @@ import type { CSSProperties } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { Download, ExternalLink, LoaderCircle, X, Zap } from "lucide-react";
+import { Download, ExternalLink, LoaderCircle, Search, X, Zap } from "lucide-react";
 import {
-  siAlmalinux, siArchlinux, siCachyos, siDebian, siFedora, siKalilinux, siKubuntu, siLinuxmint, siOpensuse,
-  siParrotsecurity, siPopos, siProxmox, siRockylinux, siTails, siUbuntu, siXubuntu, siZorin,
+  siAlmalinux, siAlpinelinux, siArchlinux, siCachyos, siCentos, siDebian, siDevuan, siFedora, siGentoo, siKalilinux,
+  siKubuntu, siLinuxmint, siLubuntu, siNixos, siNobaralinux, siOpenbsd, siOpensuse, siParrotsecurity, siPopos, siProxmox,
+  siQubesos, siRaspberrypi, siRockylinux, siSolus, siTails, siUbuntu, siUbuntumate, siVoidlinux, siXubuntu, siZorin,
 } from "simple-icons";
 import { errText, fmtSize, nf, t } from "./i18n";
 
@@ -27,6 +28,9 @@ const LOGOS: Record<string, { path?: string; svg?: string; viewBox?: string; hex
   ubuntu: siUbuntu, "ubuntu-server": siUbuntu, kubuntu: siKubuntu, xubuntu: siXubuntu, mint: siLinuxmint,
   popos: siPopos, fedora: siFedora, debian: siDebian, arch: siArchlinux, opensuse: siOpensuse,
   rocky: siRockylinux, alma: siAlmalinux, kali: siKalilinux, tails: siTails, proxmox: siProxmox,
+  lubuntu: siLubuntu, "ubuntu-mate": siUbuntumate, nobara: siNobaralinux, devuan: siDevuan, nixos: siNixos,
+  void: siVoidlinux, gentoo: siGentoo, solus: siSolus, alpine: siAlpinelinux, centos: siCentos, qubes: siQubesos,
+  raspios: siRaspberrypi, openbsd: siOpenbsd, lmde: siLinuxmint,
   windows11: { path: "M3 3h8.4v8.4H3zm9.6 0H21v8.4h-8.4zM3 12.6h8.4V21H3zm9.6 0H21V21h-8.4z", hex: "3BA7F0" },
 };
 
@@ -37,8 +41,15 @@ function glowColor(hex: string) {
   return lum < 70 ? `color-mix(in srgb, #${hex} 45%, #e8eaed)` : `#${hex}`;
 }
 
+/** An edition without a mark of its own wears its family's: "mint-xfce" -> "mint", "ubuntu-budgie" -> "ubuntu". */
+function logoOf(id: string) {
+  for (let key = id; key; key = key.slice(0, Math.max(key.lastIndexOf("-"), 0))) {
+    if (LOGOS[key]) return LOGOS[key];
+  }
+}
+
 function DistroLogo({ id, name }: { id: string; name: string }) {
-  const logo = LOGOS[id];
+  const logo = logoOf(id);
   const color = logo ? glowColor(logo.hex) : "var(--light)";
   return (
     <span className="distro-logo" style={{ "--brand": color } as CSSProperties} aria-hidden>
@@ -62,6 +73,7 @@ export default function Library({ hidden, onUse }: { hidden: boolean; onUse: (pa
   const [dls, setDls] = useState<Record<string, Dl>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const samples = useRef<Record<string, { at: number; done: number }>>({});
+  const [query, setQuery] = useState("");
 
   const load = () => invoke<Entry[]>("library").then(setEntries);
   useEffect(() => {
@@ -99,6 +111,13 @@ export default function Library({ hidden, onUse }: { hidden: boolean; onUse: (pa
     load();
   };
 
+  // Every word typed must appear in the name or the edition ("fedora kde", "mint xfce").
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const shown = (entries ?? []).filter((e) => {
+    const text = `${e.name} ${e.desc} ${t.descs[e.desc] ?? ""}`.toLowerCase();
+    return words.every((w) => text.includes(w));
+  });
+
   return (
     <section className="view scroll" hidden={hidden}>
       <div className="hero">
@@ -111,8 +130,16 @@ export default function Library({ hidden, onUse }: { hidden: boolean; onUse: (pa
           {t.searching}
         </div>
       ) : (
+        <>
+        <div className="toolbar">
+          <label className="search">
+            <Search size={15} />
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t.searchLibrary(entries.length)} aria-label={t.searchLibrary(entries.length)} />
+          </label>
+        </div>
+        {shown.length === 0 && <p className="hint">{t.noMatches}</p>}
         <div className="distros">
-          {entries.map((e) => {
+          {shown.map((e) => {
             const dl = dls[e.id];
             const pct = dl?.total ? (dl.done / dl.total) * 100 : 0;
             return (
@@ -181,6 +208,7 @@ export default function Library({ hidden, onUse }: { hidden: boolean; onUse: (pa
             );
           })}
         </div>
+        </>
       )}
       <p className="hint">{t.libraryHint}</p>
     </section>
